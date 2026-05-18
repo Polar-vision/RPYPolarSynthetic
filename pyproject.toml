@@ -1,0 +1,13 @@
+[project]
+name = "rpy-polar-synthetic"
+version = "0.1.0"
+description = "Synthetic experiments for covariance-aware RPY-stratified polar/bearing residuals."
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "scipy",
+    "matplotlib",
+]
+
+[tool.ruff]
+line-length = 100
