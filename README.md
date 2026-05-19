@@ -365,6 +365,19 @@ Key reading:
 - The staged-initialization panel separates the role of initialization from final BA: most of the pose rescue happens before the final joint refinement.
 - The final-yaw-error panel should be read as final **optical-axis yaw** error, not world heading error.
 
+How to read the staged-initialization panel:
+
+- `initial` is the pose error of the raw Monte-Carlo starting guess before any optimization.
+- `after staged init` is the pose error after the two staged least-squares initialization steps but before the final joint BA. First, a `theta-only` solve updates `roll/pitch` while keeping yaw and all inverse depths fixed. Then a `phi-only` solve updates yaw while keeping the newly estimated `roll/pitch` and all inverse depths fixed.
+- `after joint BA` is the final pose error after the subsequent full covariance-aware polar BA jointly refines pose and inverse depths.
+
+Why the middle curve already drops:
+
+- Those two staged steps are not just heuristics; they are real nonlinear least-squares optimizations on restricted subproblems.
+- The `theta-only` stage improves tilt without letting depth variables absorb the pose error.
+- The `phi-only` stage then improves optical-axis yaw after tilt has already been corrected.
+- Because the hard pose-depth coupling is temporarily removed during staged initialization, the optimizer can often recover a much better pose before the final full BA begins.
+
 What it supports:
 
 - The larger story starts to hold in this synthetic stress test: theta/phi staged initialization can rescue a hard inverse-depth BA problem that direct joint optimization does not solve.
