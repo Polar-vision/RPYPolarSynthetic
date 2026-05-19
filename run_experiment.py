@@ -15,6 +15,7 @@ from rpy_polar_synth.experiment import (  # noqa: E402
     CameraConfig,
     ScenarioConfig,
     build_landscape,
+    build_landscape_slice,
     covariance_singularity_curve,
     make_scene,
     records_to_array,
@@ -49,13 +50,31 @@ def main() -> None:
     write_csv(records, args.output / "monte_carlo_results.csv")
 
     print("Building diagnostic visualizations...")
-    landscape = build_landscape(
-        scene,
-        pitch_offsets_deg=np.linspace(-30.0, 30.0, 121),
-        yaw_offsets_deg=np.linspace(-150.0, 150.0, 151),
-    )
+    tilt_offsets = np.linspace(-30.0, 30.0, 121)
+    yaw_offsets = np.linspace(-150.0, 150.0, 151)
+    landscapes = {
+        "pitch-yaw": build_landscape(
+            scene,
+            pitch_offsets_deg=tilt_offsets,
+            yaw_offsets_deg=yaw_offsets,
+        ),
+        "roll-yaw": build_landscape_slice(
+            scene,
+            x_axis="yaw",
+            y_axis="roll",
+            x_offsets_deg=yaw_offsets,
+            y_offsets_deg=tilt_offsets,
+        ),
+        "roll-pitch": build_landscape_slice(
+            scene,
+            x_axis="pitch",
+            y_axis="roll",
+            x_offsets_deg=tilt_offsets,
+            y_offsets_deg=tilt_offsets,
+        ),
+    }
     curve = covariance_singularity_curve(camera)
-    save_all_figures(scene, records_array, curve, landscape, args.output)
+    save_all_figures(scene, records_array, curve, landscapes, args.output)
 
     print(f"Done. Results saved to: {args.output}")
     print("Key files:")
@@ -65,6 +84,10 @@ def main() -> None:
         "image_measurements.png",
         "axis_singularity.png",
         "cost_landscape.png",
+        "cost_landscape_pitch_yaw.png",
+        "cost_landscape_roll_yaw.png",
+        "cost_landscape_roll_pitch.png",
+        "cost_landscape_all_slices.png",
         "monte_carlo_summary.png",
     ]:
         print(f"  - {args.output / name}")

@@ -132,9 +132,14 @@ def save_singularity_plot(curve: dict[str, np.ndarray], path: Path) -> None:
 
 
 def save_landscape_plot(landscape: dict[str, np.ndarray], path: Path) -> None:
-    pitch = landscape["pitch_offsets_deg"]
-    yaw = landscape["yaw_offsets_deg"]
-    extent = [yaw.min(), yaw.max(), pitch.min(), pitch.max()]
+    x_offsets = landscape.get("x_offsets_deg")
+    y_offsets = landscape.get("y_offsets_deg")
+    x_axis = str(landscape.get("x_axis", "yaw"))
+    y_axis = str(landscape.get("y_axis", "pitch"))
+    if x_offsets is None or y_offsets is None:
+        x_offsets = landscape["yaw_offsets_deg"]
+        y_offsets = landscape["pitch_offsets_deg"]
+    extent = [x_offsets.min(), x_offsets.max(), y_offsets.min(), y_offsets.max()]
     items = [
         ("uv", "UV cost"),
         ("theta_only", "theta-only polar cost"),
@@ -142,6 +147,7 @@ def save_landscape_plot(landscape: dict[str, np.ndarray], path: Path) -> None:
     ]
 
     fig, axes = plt.subplots(1, 3, figsize=(13, 4), constrained_layout=True)
+    fig.suptitle(f"{y_axis} offset vs {x_axis} offset")
     for ax, (key, title) in zip(axes, items):
         image = ax.imshow(
             landscape[key],
@@ -153,16 +159,67 @@ def save_landscape_plot(landscape: dict[str, np.ndarray], path: Path) -> None:
         ax.axvline(0.0, color="white", linewidth=0.8, alpha=0.7)
         ax.axhline(0.0, color="white", linewidth=0.8, alpha=0.7)
         ax.set_title(title)
-        ax.set_xlabel("yaw offset (deg)")
-        ax.set_ylabel("pitch offset (deg)")
+        ax.set_xlabel(f"{x_axis} offset (deg)")
+        ax.set_ylabel(f"{y_axis} offset (deg)")
         fig.colorbar(image, ax=ax, label="log10(cost - min + 1)")
 
     fig.savefig(path, dpi=180)
     plt.close(fig)
 
 
+def save_landscape_overview(landscapes: dict[str, dict[str, np.ndarray]], path: Path) -> None:
+    items = [
+        ("uv", "UV cost"),
+        ("theta_only", "theta-only polar cost"),
+        ("polar", "cov-aware polar cost"),
+    ]
+
+    fig, axes = plt.subplots(
+        len(landscapes),
+        len(items),
+        figsize=(13, 11),
+        constrained_layout=True,
+    )
+    for row, (slice_name, landscape) in enumerate(landscapes.items()):
+        x_offsets = landscape["x_offsets_deg"]
+        y_offsets = landscape["y_offsets_deg"]
+        x_axis = str(landscape["x_axis"])
+        y_axis = str(landscape["y_axis"])
+        extent = [x_offsets.min(), x_offsets.max(), y_offsets.min(), y_offsets.max()]
+        for col, (key, title) in enumerate(items):
+            ax = axes[row, col]
+            image = ax.imshow(
+                landscape[key],
+                origin="lower",
+                extent=extent,
+                aspect="auto",
+                cmap="magma",
+            )
+            ax.axvline(0.0, color="white", linewidth=0.8, alpha=0.7)
+            ax.axhline(0.0, color="white", linewidth=0.8, alpha=0.7)
+            if row == 0:
+                ax.set_title(title)
+            ax.set_xlabel(f"{x_axis} offset (deg)")
+            ax.set_ylabel(f"{y_axis} offset (deg)")
+            ax.text(
+                0.02,
+                0.95,
+                slice_name,
+                transform=ax.transAxes,
+                va="top",
+                ha="left",
+                color="white",
+                fontsize=9,
+                bbox={"facecolor": "black", "alpha": 0.35, "edgecolor": "none", "pad": 3},
+            )
+            fig.colorbar(image, ax=ax, label="log10(cost - min + 1)")
+
+    fig.savefig(path, dpi=180)
+    plt.close(fig)
+
+
 def _aggregate(records: np.ndarray, metric: str) -> tuple[list[str], np.ndarray, np.ndarray, np.ndarray]:
-    methods = list(LABELS)
+    methods = [method for method in LABELS if method in set(records["method"])]
     yaw_levels = np.unique(records["yaw_init_error_deg"])
     values = np.full((len(methods), len(yaw_levels)), np.nan)
     p25 = np.full_like(values, np.nan)
@@ -180,7 +237,7 @@ def _aggregate(records: np.ndarray, metric: str) -> tuple[list[str], np.ndarray,
 
 
 def save_monte_carlo_summary(records: np.ndarray, path: Path) -> None:
-    methods = list(LABELS)
+    methods = [method for method in LABELS if method in set(records["method"])]
     yaw_levels = np.unique(records["yaw_init_error_deg"])
 
     fig, axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
@@ -244,14 +301,18 @@ def save_all_figures(
     scene: SyntheticScene,
     records: np.ndarray,
     curve: dict[str, np.ndarray],
-    landscape: dict[str, np.ndarray],
+    landscapes: dict[str, dict[str, np.ndarray]],
     output_dir: Path,
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     save_scene_plot(scene, output_dir / "scene_3d.png")
     save_image_observation_plot(scene, output_dir / "image_measurements.png")
     save_singularity_plot(curve, output_dir / "axis_singularity.png")
-    save_landscape_plot(landscape, output_dir / "cost_landscape.png")
+    save_landscape_plot(landscapes["pitch-yaw"], output_dir / "cost_landscape.png")
+    save_landscape_plot(landscapes["pitch-yaw"], output_dir / "cost_landscape_pitch_yaw.png")
+    save_landscape_plot(landscapes["roll-yaw"], output_dir / "cost_landscape_roll_yaw.png")
+    save_landscape_plot(landscapes["roll-pitch"], output_dir / "cost_landscape_roll_pitch.png")
+    save_landscape_overview(landscapes, output_dir / "cost_landscape_all_slices.png")
     save_monte_carlo_summary(records, output_dir / "monte_carlo_summary.png")
 
 

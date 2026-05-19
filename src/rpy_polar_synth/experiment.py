@@ -384,14 +384,40 @@ def build_landscape(
     pitch_offsets_deg: np.ndarray,
     yaw_offsets_deg: np.ndarray,
 ) -> dict[str, np.ndarray]:
-    roll_true, pitch_true, yaw_true = scene.true_params
-    uv = np.zeros((pitch_offsets_deg.size, yaw_offsets_deg.size))
+    return build_landscape_slice(
+        scene,
+        x_axis="yaw",
+        y_axis="pitch",
+        x_offsets_deg=yaw_offsets_deg,
+        y_offsets_deg=pitch_offsets_deg,
+    )
+
+
+def build_landscape_slice(
+    scene: SyntheticScene,
+    x_axis: str,
+    y_axis: str,
+    x_offsets_deg: np.ndarray,
+    y_offsets_deg: np.ndarray,
+) -> dict[str, np.ndarray | str]:
+    axis_to_index = {"roll": 0, "pitch": 1, "yaw": 2}
+    if x_axis not in axis_to_index or y_axis not in axis_to_index:
+        raise ValueError("Landscape axes must be selected from: roll, pitch, yaw.")
+    if x_axis == y_axis:
+        raise ValueError("Landscape x_axis and y_axis must be different.")
+
+    uv = np.zeros((y_offsets_deg.size, x_offsets_deg.size))
     theta_only = np.zeros_like(uv)
     polar = np.zeros_like(uv)
 
-    for i, pitch_offset in enumerate(np.deg2rad(pitch_offsets_deg)):
-        for j, yaw_offset in enumerate(np.deg2rad(yaw_offsets_deg)):
-            params = np.array([roll_true, pitch_true + pitch_offset, yaw_true + yaw_offset])
+    x_index = axis_to_index[x_axis]
+    y_index = axis_to_index[y_axis]
+
+    for i, y_offset in enumerate(np.deg2rad(y_offsets_deg)):
+        for j, x_offset in enumerate(np.deg2rad(x_offsets_deg)):
+            params = scene.true_params.copy()
+            params[x_index] += x_offset
+            params[y_index] += y_offset
             r_uv = uv_residual(params, scene)
             r_theta = polar_residual(params, scene, theta_only=True)
             r_polar = polar_residual(params, scene)
@@ -404,8 +430,13 @@ def build_landscape(
         return np.log10(shifted + 1.0)
 
     return {
-        "pitch_offsets_deg": pitch_offsets_deg,
-        "yaw_offsets_deg": yaw_offsets_deg,
+        "x_axis": x_axis,
+        "y_axis": y_axis,
+        "x_offsets_deg": x_offsets_deg,
+        "y_offsets_deg": y_offsets_deg,
+        # Backward-compatible keys for the original pitch-yaw landscape.
+        "pitch_offsets_deg": y_offsets_deg if y_axis == "pitch" else np.array([]),
+        "yaw_offsets_deg": x_offsets_deg if x_axis == "yaw" else np.array([]),
         "uv": normalize(uv),
         "theta_only": normalize(theta_only),
         "polar": normalize(polar),

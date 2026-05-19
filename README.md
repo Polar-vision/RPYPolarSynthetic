@@ -59,6 +59,10 @@ RPYPolarSynthetic/
     image_measurements.png
     axis_singularity.png
     cost_landscape.png
+    cost_landscape_pitch_yaw.png
+    cost_landscape_roll_yaw.png
+    cost_landscape_roll_pitch.png
+    cost_landscape_all_slices.png
     monte_carlo_summary.png
   outputs_ba/
     ba_monte_carlo_results.csv
@@ -187,9 +191,9 @@ near optical axis: use theta strongly, use phi weakly or not at all
 away from axis: use both theta and phi
 ```
 
-![Cost landscape](outputs/cost_landscape.png)
+![Cost landscape: pitch-yaw](outputs/cost_landscape.png)
 
-`cost_landscape.png` compares cost surfaces over pitch and optical-axis yaw offsets. The three panels show UV cost, theta-only polar cost, and covariance-aware polar cost.
+`cost_landscape.png` is the original pitch-yaw slice, also saved as `cost_landscape_pitch_yaw.png`. It compares cost surfaces over pitch and optical-axis yaw offsets. The three panels show UV cost, theta-only polar cost, and covariance-aware polar cost.
 
 Key reading:
 
@@ -205,6 +209,26 @@ What it supports:
 Important caution:
 
 - This plot depends on the project's optical-axis yaw convention. If yaw is a world-frame heading, the theta-only surface would not have the same interpretation.
+
+The same three cost types are now also drawn for the other two tilt slices:
+
+![Cost landscape: roll-yaw](outputs/cost_landscape_roll_yaw.png)
+
+`cost_landscape_roll_yaw.png` holds pitch fixed and scans roll versus optical-axis yaw. This is the closest sibling of the original plot, but it shows that the same theta/phi logic is not tied to the pitch axis specifically.
+
+![Cost landscape: roll-pitch](outputs/cost_landscape_roll_pitch.png)
+
+`cost_landscape_roll_pitch.png` holds yaw fixed and scans the two tilt axes together. This is the most direct check that the roll-pitch subspace behaves like a tilt plane, while yaw remains the separate in-plane rotation.
+
+![Cost landscape: all slices](outputs/cost_landscape_all_slices.png)
+
+`cost_landscape_all_slices.png` arranges all nine panels together: three cost types times three coordinate slices. This is the most complete visualization for the observation model.
+
+What the three slices together support:
+
+- `pitch-yaw` and `roll-yaw` show that both tilt axes decouple differently from the optical-axis yaw, but neither breaks the basic staged story.
+- `roll-pitch` shows the pure tilt plane, where the residual landscape should still be well-behaved near the truth.
+- The three slices jointly support the claim that the decomposition is geometric, not an artifact of one special axis choice.
 
 ![Single-view Monte-Carlo summary](outputs/monte_carlo_summary.png)
 
@@ -369,3 +393,4 @@ Suggested version labels:
 | `v0.1.0-sanity` | single-view sanity-check implementation |
 | `v0.2.0-ba-stress` | two-view inverse-depth BA stress-test implementation and analysis |
 | `v0.2.1-figure-report` | detailed figure interpretation and project-specific RPY documentation |
+| `v0.2.2-landscape-slices` | complete roll-pitch-yaw cost landscape slices with six additional panels |
