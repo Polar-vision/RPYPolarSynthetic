@@ -93,6 +93,17 @@ def _plot_series(ax, x, y, method: str, label: str, yerr=None, zorder: int = 2) 
         )
 
 
+def _monte_carlo_metadata(records: np.ndarray) -> tuple[int, int, int]:
+    yaw_levels = np.unique(records["yaw_init_error_deg"])
+    trial_counts = []
+    for yaw in yaw_levels:
+        mask = records["yaw_init_error_deg"] == yaw
+        trial_counts.append(len(np.unique(records["trial"][mask])))
+    n_trials = int(min(trial_counts)) if trial_counts else 0
+    n_methods = int(len(np.unique(records["method"])))
+    return n_trials, int(len(yaw_levels)), n_methods
+
+
 def save_scene_plot(scene: SyntheticScene, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fig = plt.figure(figsize=(8, 6))
@@ -301,8 +312,15 @@ def save_monte_carlo_summary(records: np.ndarray, path: Path) -> None:
     methods = [method for method in LABELS if method in set(records["method"])]
     yaw_levels = np.unique(records["yaw_init_error_deg"])
     plot_x = _x_offsets(yaw_levels, methods)
+    n_trials, n_yaws, _ = _monte_carlo_metadata(records)
 
     fig, axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
+    fig.suptitle(
+        f"Single-view Monte Carlo summary: {n_trials} trials/level, "
+        f"{n_trials * n_yaws} runs/method\n"
+        "Markers/curves show medians; bars show 25th-75th percentiles; x jitter is display-only.",
+        fontsize=12,
+    )
 
     ax = axes[0, 0]
     for i, method in enumerate(methods):
@@ -399,8 +417,15 @@ def save_ba_summary(records: np.ndarray, path: Path) -> None:
     methods = ["ba_uv_joint", "ba_polar_plain_joint", "ba_polar_cov_joint", "ba_polar_staged"]
     yaw_levels = np.unique(records["yaw_init_error_deg"])
     plot_x = _x_offsets(yaw_levels, methods)
+    n_trials, n_yaws, _ = _monte_carlo_metadata(records)
 
     fig, axes = plt.subplots(2, 3, figsize=(15, 8), constrained_layout=True)
+    fig.suptitle(
+        f"Two-view BA Monte Carlo summary: {n_trials} trials/level, "
+        f"{n_trials * n_yaws} runs/method\n"
+        "Markers/curves show medians; bars show 25th-75th percentiles; x jitter is display-only.",
+        fontsize=12,
+    )
 
     ax = axes[0, 0]
     for i, method in enumerate(methods):

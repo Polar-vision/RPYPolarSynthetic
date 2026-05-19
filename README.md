@@ -232,7 +232,14 @@ What the three slices together support:
 
 ![Single-view Monte-Carlo summary](outputs/monte_carlo_summary.png)
 
-`monte_carlo_summary.png` summarizes the clean single-view Monte-Carlo experiment.
+`monte_carlo_summary.png` summarizes the clean single-view Monte-Carlo experiment. In the default run, it aggregates 10 randomized trials per yaw-error level, 6 yaw-error levels, and therefore 60 runs per method. With 4 methods, the CSV contains 240 result records.
+
+This is how the figure reflects Monte-Carlo sampling:
+
+- The x-axis lists the controlled initial optical-axis `yaw` error levels.
+- For each x value, the experiment repeats the same method under 10 randomized initial perturbations.
+- A plotted marker is not one run; it is a statistic over those repeated trials.
+- Median curves summarize the central tendency, and vertical bars show the 25th-75th percentile range when that subplot uses error bars.
 
 Visual note:
 
@@ -347,6 +354,8 @@ Visualization:
 
 `ba_monte_carlo_summary.png` is the central evidence figure for the larger claim. Unlike the single-view sanity check, this experiment optimizes pose and inverse depths together, so pose-depth coupling can trap direct joint optimization.
 
+In the default BA run, this figure aggregates 6 randomized trials per yaw-error level and 6 yaw-error levels, so each method has 36 runs. With 4 methods, `ba_monte_carlo_results.csv` contains 144 result records.
+
 Key reading:
 
 - The convergence-rate panel shows that direct joint BA with UV, raw polar, or covariance-aware polar residuals fails under the tested large-initial-error regime.
@@ -408,3 +417,4 @@ Suggested version labels:
 | `v0.2.1-figure-report` | detailed figure interpretation and project-specific RPY documentation |
 | `v0.2.2-landscape-slices` | complete roll-pitch-yaw cost landscape slices with six additional panels |
 | `v0.2.3-summary-readability` | Monte-Carlo subplot explanations and de-overlapped summary curves |
+| `v0.2.4-monte-carlo-metadata` | explicit Monte-Carlo trial counts and aggregation metadata in summary figures |
