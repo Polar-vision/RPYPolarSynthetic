@@ -8,10 +8,11 @@ The project tests whether a camera observation can be decomposed into:
 - an angular part `phi`, useful for heading / in-plane optical-axis yaw;
 - a covariance-aware residual that respects pixel-noise propagation and the optical-axis singularity.
 
-The current repository contains two experiment layers:
+The current repository contains three experiment layers:
 
 1. `run_experiment.py`: a clean single-view sanity check.
 2. `run_ba_experiment.py`: a harder two-view inverse-depth BA stress test.
+3. `run_exp3_experiment.py`: a more realistic three-view local BA stress test with unknown translations and weak baseline-length priors.
 
 ## Project-Specific RPY Convention
 
@@ -48,10 +49,12 @@ This naming is intentional. If `yaw` is instead defined as a world-frame heading
 RPYPolarSynthetic/
   run_experiment.py
   run_ba_experiment.py
+  run_exp3_experiment.py
   src/rpy_polar_synth/
     geometry.py
     experiment.py
     ba_experiment.py
+    realistic_ba_experiment.py
     visualize.py
   outputs/
     monte_carlo_results.csv
@@ -67,6 +70,9 @@ RPYPolarSynthetic/
   outputs_ba/
     ba_monte_carlo_results.csv
     ba_monte_carlo_summary.png
+  outputs_exp3/
+    exp3_monte_carlo_results.csv
+    exp3_monte_carlo_summary.png
 ```
 
 ## Environment
@@ -390,6 +396,127 @@ Limitations:
 - Outliers are mild and handled only by a robust loss, not by a full matching/outlier rejection pipeline.
 - This is evidence for a research direction, not yet a complete VIO/SLAM claim.
 
+## Experiment 3: Realistic Three-View Local BA
+
+Run:
+
+```powershell
+python run_exp3_experiment.py
+```
+
+Motivation:
+
+Experiment 2 already shows that staged theta/phi initialization can rescue a hard inverse-depth BA problem, but it still assumes the target-view translations are known. Experiment 3 makes the setup more realistic by jointly optimizing two later camera poses and all inverse depths, while keeping only the anchor view fixed.
+
+This remains synthetic, but it adds several ingredients that move the problem closer to a real local BA window:
+
+- a noisy anchor view instead of perfect anchor bearings;
+- two later views instead of one;
+- unknown translation components for both later poses;
+- a weak baseline-length prior that resolves monocular scale without giving the optimizer the true translation direction;
+- mild outliers in the later-view tracks.
+
+Configuration:
+
+| Setting | Value |
+|---|---:|
+| Camera model | equidistant projection |
+| Image size | 1600 x 1200 |
+| Focal length | 620 px |
+| Anchor-view pixel noise sigma | 1.25 px |
+| Target-view pixel noise sigma | 1.25 px |
+| Points | 90 |
+| Later camera poses | 2 |
+| True RPYs | `(8, -13, 22)` deg and `(12, -9, 36)` deg |
+| True camera centers | `(0.78, -0.18, 0.15)` and `(1.52, -0.34, 0.27)` |
+| Outlier fraction | 6% shuffled tracks |
+| Motion prior | baseline-length prior only |
+| Baseline prior sigma | 0.10 m |
+| Yaw initialization errors | `0, 30, 60, 100, 140, 170` deg |
+| Tilt initialization error | 24 deg |
+| Translation initialization error | 0.28 m |
+| Log inverse-depth noise sigma | 0.55 |
+| Trials per level | 6 |
+| Output directory | `outputs_exp3/` |
+
+Optimized state:
+
+```text
+x = [rpy_2, center_2, rpy_3, center_3, log_inv_depth_1, ..., log_inv_depth_N]
+```
+
+Methods:
+
+| Method | Description |
+|---|---|
+| `ba_uv_joint` | direct multi-view BA using UV residuals |
+| `ba_polar_plain_joint` | direct multi-view BA using raw polar residuals |
+| `ba_polar_cov_joint` | direct multi-view BA using covariance-aware polar residuals |
+| `ba_polar_staged` | staged theta/phi rotation initialization, then final joint multi-view BA |
+
+Success criterion:
+
+```text
+max rotation error across the two optimized poses < 3 deg
+and inlier depth relative RMSE < 45%
+```
+
+Translation error is still reported, but it is treated as a diagnostic rather than the success gate. The reason is important: Experiment 3 uses only weak baseline-length priors to anchor monocular scale, so translation direction remains much less directly constrained than rotation and depth.
+
+Results:
+
+| Method | Convergence | Median pose error | Median translation error | Median inlier depth RMSE | Median function evals |
+|---|---:|---:|---:|---:|---:|
+| `ba_uv_joint` | 0.0% | 68.980 deg | 0.280 m | 3.880 | 120.0 |
+| `ba_polar_plain_joint` | 0.0% | 46.314 deg | 0.280 m | 2.828 | 120.0 |
+| `ba_polar_cov_joint` | 0.0% | 37.943 deg | 0.280 m | 2.440 | 120.0 |
+| `ba_polar_staged` | 83.3% | 1.819 deg | 0.280 m | 0.315 | 115.5 |
+
+Per-yaw summary for `ba_polar_staged`:
+
+| Initial yaw error | Convergence | Median pose error | Median translation error | Median inlier depth RMSE |
+|---:|---:|---:|---:|---:|
+| 0 deg | 83.3% | 1.630 deg | 0.280 m | 0.370 |
+| 30 deg | 83.3% | 2.114 deg | 0.280 m | 0.291 |
+| 60 deg | 100.0% | 1.505 deg | 0.280 m | 0.273 |
+| 100 deg | 100.0% | 1.867 deg | 0.280 m | 0.323 |
+| 140 deg | 66.7% | 1.809 deg | 0.280 m | 0.329 |
+| 170 deg | 66.7% | 2.059 deg | 0.280 m | 0.285 |
+
+Interpretation:
+
+Experiment 3 keeps the central staged-initialization story alive in a more realistic local BA problem. Once noisy anchor bearings, multiple later views, unknown translation components, and weak scale priors are added, the direct joint methods still collapse into very poor pose/depth solutions, while staged polar initialization continues to drive the optimizer into a good rotation-depth basin in most trials.
+
+At the same time, this experiment also exposes a real limitation instead of hiding it: the weak baseline-length priors are enough to prevent total scale drift, but they do not make translation direction as recoverable as rotation. So the translation-error panel should be read as a diagnostic of how weakly constrained that part of the problem still is, not as the main evidence for or against the staged story.
+
+Visualization:
+
+![Experiment 3 Monte-Carlo summary](outputs_exp3/exp3_monte_carlo_summary.png)
+
+### Figure Interpretation
+
+`exp3_monte_carlo_summary.png` summarizes 6 randomized trials per yaw-error level and 6 yaw-error levels, so each method has 36 runs.
+
+Key reading:
+
+- The convergence-rate panel shows a clear separation again: the three direct joint methods stay at 0%, while `ba_polar_staged` reaches 83.3% overall under the stated rotation-depth criterion.
+- The final-pose-error panel shows that the direct joint methods still end in large-error basins, whereas the staged method stays around 2 degrees median pose error even under very large yaw initialization error.
+- The final-translation-error panel should be read carefully. It stays near the initialization scale because Experiment 3 only constrains baseline lengths weakly; this panel is therefore a realism diagnostic, not the main success signal.
+- The inverse-depth-RMSE panel shows the same story as the pose panel: staged initialization is what lets the later joint BA recover usable structure.
+- The optimizer-effort panel shows that the staged method is slightly cheaper than exhausting the full iteration budget in the direct joint methods, because it reaches a workable basin before the final BA.
+- The staged-initialization panel is the most direct explanation of why the method works here: the median initial pose error is about 84.6 degrees, the staged rotation-only initialization drops it to about 1.84 degrees, and the final joint BA then keeps that good basin rather than discovering it from scratch.
+
+What it supports:
+
+- The staged theta/phi idea is not limited to the simplest two-view, known-translation BA stress test.
+- The main benefit still comes from reorganizing the rotation search before full BA, not merely from swapping UV residuals for polar residuals.
+- The story remains visible even when anchor observations are noisy and later-view translations are no longer fixed.
+
+What it does not support:
+
+- It does not prove that translation is solved. Experiment 3 only uses weak baseline-length priors, and translation direction remains much less observable than rotation.
+- It still does not prove real-data superiority or full monocular free-scale SLAM robustness.
+
 ## Current Claim
 
 Supported:
@@ -397,11 +524,12 @@ Supported:
 - covariance-aware polar residual is better behaved than raw polar residual;
 - `phi` must be wrapped and down-weighted near the optical axis;
 - staged theta/phi initialization can dramatically improve difficult inverse-depth BA convergence in this synthetic setting.
+- staged theta/phi initialization still improves a more realistic multi-view local BA problem with noisy anchor observations and unknown translation components.
 
 Not yet fully proven:
 
 - superiority on real VIO / SLAM datasets;
-- robustness when translation, scale, bias, or extrinsics are also unknown;
+- robustness when translation direction, scale, bias, or extrinsics are all simultaneously unknown without auxiliary priors;
 - general advantage across camera models and motion patterns.
 
 ## Reproduce
@@ -410,7 +538,8 @@ Not yet fully proven:
 cd E:\zuo\projects\RPYPolarSynthetic
 python run_experiment.py
 python run_ba_experiment.py
-python -m compileall src run_experiment.py run_ba_experiment.py
+python run_exp3_experiment.py
+python -m compileall src run_experiment.py run_ba_experiment.py run_exp3_experiment.py
 ```
 
 ## Versioning
@@ -431,3 +560,4 @@ Suggested version labels:
 | `v0.2.2-landscape-slices` | complete roll-pitch-yaw cost landscape slices with six additional panels |
 | `v0.2.3-summary-readability` | Monte-Carlo subplot explanations and de-overlapped summary curves |
 | `v0.2.4-monte-carlo-metadata` | explicit Monte-Carlo trial counts and aggregation metadata in summary figures |
+| `v0.3.0-realistic-ba-window` | three-view local BA stress test with unknown translations and weak baseline-length priors |

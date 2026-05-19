@@ -511,3 +511,104 @@ def save_ba_summary(records: np.ndarray, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path, dpi=180)
     plt.close(fig)
+
+
+def save_realistic_ba_summary(records: np.ndarray, path: Path) -> None:
+    methods = ["ba_uv_joint", "ba_polar_plain_joint", "ba_polar_cov_joint", "ba_polar_staged"]
+    yaw_levels = np.unique(records["yaw_init_error_deg"])
+    plot_x = _x_offsets(yaw_levels, methods)
+    n_trials, n_yaws, _ = _monte_carlo_metadata(records)
+
+    fig, axes = plt.subplots(2, 3, figsize=(15, 8), constrained_layout=True)
+    fig.suptitle(
+        f"Realistic BA Monte Carlo summary: {n_trials} trials/level, "
+        f"{n_trials * n_yaws} runs/method\n"
+        "Markers/curves show medians; bars show 25th-75th percentiles; x jitter is display-only.",
+        fontsize=12,
+    )
+
+    ax = axes[0, 0]
+    for i, method in enumerate(methods):
+        rates = []
+        for yaw in yaw_levels:
+            mask = (records["method"] == method) & (records["yaw_init_error_deg"] == yaw)
+            rates.append(100.0 * np.mean(records["converged"][mask]))
+        _plot_series(ax, plot_x[method], rates, method, LABELS[method], zorder=2 + i)
+    ax.set_title("BA convergence rate")
+    ax.set_xlabel("initial yaw error (deg)")
+    ax.set_ylabel("rotation < 3 deg and inlier depth RMSE < 45% (%)")
+    ax.set_ylim(-3, 103)
+    ax.grid(True, alpha=0.25)
+    ax.legend(fontsize=8)
+
+    ax = axes[0, 1]
+    yaw_levels, med, spread = _aggregate_methods(records, methods, "rotation_error_deg")
+    plot_x = _x_offsets(yaw_levels, methods)
+    for i, method in enumerate(methods):
+        yerr = np.vstack([med[i] - spread[0, i], spread[1, i] - med[i]])
+        _plot_series(ax, plot_x[method], med[i], method, LABELS[method], yerr=yerr, zorder=2 + i)
+    ax.set_yscale("log")
+    ax.set_title("Final pose error")
+    ax.set_xlabel("initial yaw error (deg)")
+    ax.set_ylabel("median rotation error (deg)")
+    ax.grid(True, which="both", alpha=0.25)
+
+    ax = axes[0, 2]
+    yaw_levels, med, spread = _aggregate_methods(records, methods, "translation_error_m")
+    plot_x = _x_offsets(yaw_levels, methods)
+    for i, method in enumerate(methods):
+        yerr = np.vstack([med[i] - spread[0, i], spread[1, i] - med[i]])
+        _plot_series(ax, plot_x[method], med[i], method, LABELS[method], yerr=yerr, zorder=2 + i)
+    ax.set_yscale("log")
+    ax.set_title("Final translation error")
+    ax.set_xlabel("initial yaw error (deg)")
+    ax.set_ylabel("median translation error (m)")
+    ax.grid(True, which="both", alpha=0.25)
+
+    ax = axes[1, 0]
+    yaw_levels, med, spread = _aggregate_methods(records, methods, "inlier_depth_rel_rmse")
+    plot_x = _x_offsets(yaw_levels, methods)
+    for i, method in enumerate(methods):
+        yerr = np.vstack([med[i] - spread[0, i], spread[1, i] - med[i]])
+        _plot_series(ax, plot_x[method], med[i], method, LABELS[method], yerr=yerr, zorder=2 + i)
+    ax.set_yscale("log")
+    ax.set_title("Final inverse-depth BA quality")
+    ax.set_xlabel("initial yaw error (deg)")
+    ax.set_ylabel("inlier relative depth RMSE")
+    ax.grid(True, which="both", alpha=0.25)
+
+    ax = axes[1, 1]
+    yaw_levels, med, _ = _aggregate_methods(records, methods, "nfev")
+    plot_x = _x_offsets(yaw_levels, methods)
+    for i, method in enumerate(methods):
+        _plot_series(ax, plot_x[method], med[i], method, LABELS[method], zorder=2 + i)
+    ax.set_title("Optimizer effort")
+    ax.set_xlabel("initial yaw error (deg)")
+    ax.set_ylabel("median function evaluations")
+    ax.grid(True, alpha=0.25)
+
+    ax = axes[1, 2]
+    staged_mask = records["method"] == "ba_polar_staged"
+    staged = records[staged_mask]
+    yaws = np.unique(staged["yaw_init_error_deg"])
+    initial = []
+    after_stage = []
+    final = []
+    for yaw in yaws:
+        mask = staged["yaw_init_error_deg"] == yaw
+        initial.append(np.median(staged["initial_rotation_error_deg"][mask]))
+        after_stage.append(np.median(staged["stage_rotation_error_deg"][mask]))
+        final.append(np.median(staged["rotation_error_deg"][mask]))
+    ax.plot(yaws, initial, marker="o", label="initial", color="#777777")
+    ax.plot(yaws, after_stage, marker="o", label="after staged init", color=COLORS["ba_polar_staged"])
+    ax.plot(yaws, final, marker="o", label="after joint BA", color="#222222")
+    ax.set_yscale("log")
+    ax.set_title("What staged initialization changes")
+    ax.set_xlabel("initial yaw error (deg)")
+    ax.set_ylabel("median pose error (deg)")
+    ax.grid(True, which="both", alpha=0.25)
+    ax.legend(fontsize=8)
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(path, dpi=180)
+    plt.close(fig)
