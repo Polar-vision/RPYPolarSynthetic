@@ -32,6 +32,67 @@ LABELS = {
 }
 
 
+MARKERS = {
+    "uv_joint": "o",
+    "polar_plain_joint": "s",
+    "polar_cov_joint": "^",
+    "polar_staged": "D",
+    "ba_uv_joint": "o",
+    "ba_polar_plain_joint": "s",
+    "ba_polar_cov_joint": "^",
+    "ba_polar_staged": "D",
+}
+
+
+LINESTYLES = {
+    "uv_joint": "-",
+    "polar_plain_joint": "--",
+    "polar_cov_joint": "-.",
+    "polar_staged": ":",
+    "ba_uv_joint": "-",
+    "ba_polar_plain_joint": "--",
+    "ba_polar_cov_joint": "-.",
+    "ba_polar_staged": ":",
+}
+
+
+def _x_offsets(yaw_levels: np.ndarray, methods: list[str]) -> dict[str, np.ndarray]:
+    if yaw_levels.size <= 1 or not methods:
+        return {method: yaw_levels.copy() for method in methods}
+
+    sorted_levels = np.sort(yaw_levels.astype(float))
+    deltas = np.diff(sorted_levels)
+    base_step = float(np.min(deltas)) if deltas.size else 1.0
+    jitter = min(base_step * 0.18, 1.5)
+    center = (len(methods) - 1) / 2.0
+    offsets = {}
+    for i, method in enumerate(methods):
+        offsets[method] = yaw_levels + (i - center) * jitter
+    return offsets
+
+
+def _plot_series(ax, x, y, method: str, label: str, yerr=None, zorder: int = 2) -> None:
+    common = {
+        "color": COLORS[method],
+        "marker": MARKERS.get(method, "o"),
+        "linestyle": LINESTYLES.get(method, "-"),
+        "linewidth": 1.8,
+        "markersize": 5.5,
+        "label": label,
+        "zorder": zorder,
+    }
+    if yerr is None:
+        ax.plot(x, y, **common)
+    else:
+        ax.errorbar(
+            x,
+            y,
+            yerr=yerr,
+            capsize=3,
+            **common,
+        )
+
+
 def save_scene_plot(scene: SyntheticScene, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fig = plt.figure(figsize=(8, 6))
@@ -239,36 +300,30 @@ def _aggregate(records: np.ndarray, metric: str) -> tuple[list[str], np.ndarray,
 def save_monte_carlo_summary(records: np.ndarray, path: Path) -> None:
     methods = [method for method in LABELS if method in set(records["method"])]
     yaw_levels = np.unique(records["yaw_init_error_deg"])
+    plot_x = _x_offsets(yaw_levels, methods)
 
     fig, axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
 
     ax = axes[0, 0]
-    for method in methods:
+    for i, method in enumerate(methods):
         rates = []
         for yaw in yaw_levels:
             mask = (records["method"] == method) & (records["yaw_init_error_deg"] == yaw)
             rates.append(100.0 * np.mean(records["converged_2deg"][mask]))
-        ax.plot(yaw_levels, rates, marker="o", color=COLORS[method], label=LABELS[method])
+        _plot_series(ax, plot_x[method], rates, method, LABELS[method], zorder=2 + i)
     ax.set_title("Convergence rate")
     ax.set_xlabel("initial yaw error (deg)")
     ax.set_ylabel("runs below 2 deg rotation error (%)")
     ax.set_ylim(-3, 103)
     ax.grid(True, alpha=0.25)
-    ax.legend()
+    ax.legend(fontsize=8, ncols=2)
 
     ax = axes[0, 1]
     methods, yaw_levels, med, spread = _aggregate(records, "rotation_error_deg")
+    plot_x = _x_offsets(yaw_levels, methods)
     for i, method in enumerate(methods):
         yerr = np.vstack([med[i] - spread[0, i], spread[1, i] - med[i]])
-        ax.errorbar(
-            yaw_levels,
-            med[i],
-            yerr=yerr,
-            marker="o",
-            capsize=3,
-            color=COLORS[method],
-            label=LABELS[method],
-        )
+        _plot_series(ax, plot_x[method], med[i], method, LABELS[method], yerr=yerr, zorder=2 + i)
     ax.set_yscale("log")
     ax.set_title("Final rotation error")
     ax.set_xlabel("initial yaw error (deg)")
@@ -277,8 +332,9 @@ def save_monte_carlo_summary(records: np.ndarray, path: Path) -> None:
 
     ax = axes[1, 0]
     methods, yaw_levels, med, _ = _aggregate(records, "nfev")
+    plot_x = _x_offsets(yaw_levels, methods)
     for i, method in enumerate(methods):
-        ax.plot(yaw_levels, med[i], marker="o", color=COLORS[method], label=LABELS[method])
+        _plot_series(ax, plot_x[method], med[i], method, LABELS[method], zorder=2 + i)
     ax.set_title("Optimizer effort")
     ax.set_xlabel("initial yaw error (deg)")
     ax.set_ylabel("median function evaluations")
@@ -286,8 +342,9 @@ def save_monte_carlo_summary(records: np.ndarray, path: Path) -> None:
 
     ax = axes[1, 1]
     methods, yaw_levels, med, _ = _aggregate(records, "tilt_yaw_coupling")
+    plot_x = _x_offsets(yaw_levels, methods)
     for i, method in enumerate(methods):
-        ax.plot(yaw_levels, med[i], marker="o", color=COLORS[method], label=LABELS[method])
+        _plot_series(ax, plot_x[method], med[i], method, LABELS[method], zorder=2 + i)
     ax.set_title("Tilt-yaw coupling at solution")
     ax.set_xlabel("initial yaw error (deg)")
     ax.set_ylabel("normalized Hessian cross block")
@@ -341,16 +398,17 @@ def _aggregate_methods(
 def save_ba_summary(records: np.ndarray, path: Path) -> None:
     methods = ["ba_uv_joint", "ba_polar_plain_joint", "ba_polar_cov_joint", "ba_polar_staged"]
     yaw_levels = np.unique(records["yaw_init_error_deg"])
+    plot_x = _x_offsets(yaw_levels, methods)
 
     fig, axes = plt.subplots(2, 3, figsize=(15, 8), constrained_layout=True)
 
     ax = axes[0, 0]
-    for method in methods:
+    for i, method in enumerate(methods):
         rates = []
         for yaw in yaw_levels:
             mask = (records["method"] == method) & (records["yaw_init_error_deg"] == yaw)
             rates.append(100.0 * np.mean(records["converged"][mask]))
-        ax.plot(yaw_levels, rates, marker="o", color=COLORS[method], label=LABELS[method])
+        _plot_series(ax, plot_x[method], rates, method, LABELS[method], zorder=2 + i)
     ax.set_title("BA convergence rate")
     ax.set_xlabel("initial yaw error (deg)")
     ax.set_ylabel("pose < 3 deg and inlier depth RMSE < 45% (%)")
@@ -360,17 +418,10 @@ def save_ba_summary(records: np.ndarray, path: Path) -> None:
 
     ax = axes[0, 1]
     yaw_levels, med, spread = _aggregate_methods(records, methods, "rotation_error_deg")
+    plot_x = _x_offsets(yaw_levels, methods)
     for i, method in enumerate(methods):
         yerr = np.vstack([med[i] - spread[0, i], spread[1, i] - med[i]])
-        ax.errorbar(
-            yaw_levels,
-            med[i],
-            yerr=yerr,
-            marker="o",
-            capsize=3,
-            color=COLORS[method],
-            label=LABELS[method],
-        )
+        _plot_series(ax, plot_x[method], med[i], method, LABELS[method], yerr=yerr, zorder=2 + i)
     ax.set_yscale("log")
     ax.set_title("Final pose error")
     ax.set_xlabel("initial yaw error (deg)")
@@ -379,17 +430,10 @@ def save_ba_summary(records: np.ndarray, path: Path) -> None:
 
     ax = axes[0, 2]
     yaw_levels, med, spread = _aggregate_methods(records, methods, "inlier_depth_rel_rmse")
+    plot_x = _x_offsets(yaw_levels, methods)
     for i, method in enumerate(methods):
         yerr = np.vstack([med[i] - spread[0, i], spread[1, i] - med[i]])
-        ax.errorbar(
-            yaw_levels,
-            med[i],
-            yerr=yerr,
-            marker="o",
-            capsize=3,
-            color=COLORS[method],
-            label=LABELS[method],
-        )
+        _plot_series(ax, plot_x[method], med[i], method, LABELS[method], yerr=yerr, zorder=2 + i)
     ax.set_yscale("log")
     ax.set_title("Final inverse-depth BA quality")
     ax.set_xlabel("initial yaw error (deg)")
@@ -398,8 +442,9 @@ def save_ba_summary(records: np.ndarray, path: Path) -> None:
 
     ax = axes[1, 0]
     yaw_levels, med, _ = _aggregate_methods(records, methods, "nfev")
+    plot_x = _x_offsets(yaw_levels, methods)
     for i, method in enumerate(methods):
-        ax.plot(yaw_levels, med[i], marker="o", color=COLORS[method], label=LABELS[method])
+        _plot_series(ax, plot_x[method], med[i], method, LABELS[method], zorder=2 + i)
     ax.set_title("Optimizer effort")
     ax.set_xlabel("initial yaw error (deg)")
     ax.set_ylabel("median function evaluations")
@@ -429,8 +474,9 @@ def save_ba_summary(records: np.ndarray, path: Path) -> None:
 
     ax = axes[1, 2]
     yaw_levels, med, _ = _aggregate_methods(records, methods, "yaw_error_deg")
+    plot_x = _x_offsets(yaw_levels, methods)
     for i, method in enumerate(methods):
-        ax.plot(yaw_levels, med[i], marker="o", color=COLORS[method], label=LABELS[method])
+        _plot_series(ax, plot_x[method], med[i], method, LABELS[method], zorder=2 + i)
     ax.set_yscale("log")
     ax.set_title("Final yaw error")
     ax.set_xlabel("initial yaw error (deg)")

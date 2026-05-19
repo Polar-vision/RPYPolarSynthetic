@@ -234,7 +234,20 @@ What the three slices together support:
 
 `monte_carlo_summary.png` summarizes the clean single-view Monte-Carlo experiment.
 
-Key reading:
+Visual note:
+
+- Several curves are numerically identical or extremely close in this clean experiment.
+- To avoid hiding one method behind another, the plotted x positions are shifted by a tiny method-specific visual offset.
+- The true x variable is still the initialization error of the project-specific optical-axis `yaw`; the offset is only for readability.
+
+Subplot reading:
+
+- **Top-left: Convergence rate**. This reports the percentage of trials whose final rotation error is below 2 degrees. In the current clean single-view setup, all methods reach 100% across all initial yaw errors, so the curves naturally overlap. This means the problem is too easy to separate convergence basins.
+- **Top-right: Final rotation error**. This reports the median final rotation error on a log scale. `polar_cov_joint` and `polar_staged` nearly overlap because the staged initializer and direct covariance-aware polar optimization reach the same optimum in this low-dimensional pose-only case. `polar_plain_joint` is worse, showing that raw polar weighting is statistically weaker.
+- **Bottom-left: Optimizer effort**. This reports median function evaluations. `polar_staged` usually costs more evaluations because it runs theta initialization, phi initialization, and final joint refinement. In this easy setting, the extra stages do not buy a convergence-rate improvement.
+- **Bottom-right: Tilt-yaw coupling at solution**. This reports a normalized Hessian cross-block between the roll/pitch tilt variables and the optical-axis yaw variable. Smaller values mean the estimated solution has weaker local tilt-yaw coupling. In this clean setup, methods are close because they all converge to nearly the same local geometry.
+
+Key conclusion:
 
 - All methods converge in this clean 3-DOF pose-only setup.
 - `polar_plain_joint` has a larger final error because raw `[theta, phi]` weighting ignores the actual covariance induced by pixel noise.
@@ -394,3 +407,4 @@ Suggested version labels:
 | `v0.2.0-ba-stress` | two-view inverse-depth BA stress-test implementation and analysis |
 | `v0.2.1-figure-report` | detailed figure interpretation and project-specific RPY documentation |
 | `v0.2.2-landscape-slices` | complete roll-pitch-yaw cost landscape slices with six additional panels |
+| `v0.2.3-summary-readability` | Monte-Carlo subplot explanations and de-overlapped summary curves |
