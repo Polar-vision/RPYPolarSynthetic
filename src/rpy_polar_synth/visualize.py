@@ -4,6 +4,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.patches import Rectangle
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 from .ba_experiment import BAScene
@@ -1076,6 +1077,246 @@ def save_free_xyz_scene_plot(scene: FreeXYZBAScene, path: Path, title: str) -> N
     ax.legend(loc="upper left", fontsize=8)
     colorbar = fig.colorbar(scatter, ax=ax, shrink=0.76, pad=0.08)
     colorbar.set_label("track length (views)")
+    fig.tight_layout()
+    fig.savefig(path, dpi=180)
+    plt.close(fig)
+
+
+def save_airborne_strip_scene_plot(
+    scene: FreeXYZBAScene,
+    strip_ids: tuple[int, ...],
+    path: Path,
+    title: str,
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig = plt.figure(figsize=(9.2, 6.8))
+    ax = fig.add_subplot(111, projection="3d")
+    ax.view_init(elev=24, azim=-58)
+
+    strip_ids_array = np.array(strip_ids, dtype=int)
+    strip_palette = ["#F58518", "#4C78A8", "#54A24B", "#E45756"]
+    strip_names = {0: "west strip", 1: "center strip", 2: "east strip"}
+
+    scatter = ax.scatter(
+        scene.points_world[:, 0],
+        scene.points_world[:, 1],
+        scene.points_world[:, 2],
+        c=scene.track_lengths,
+        s=12,
+        cmap="viridis",
+        alpha=0.44,
+        depthshade=False,
+        label="landmarks",
+    )
+
+    occluder_vertices = []
+    for idx, box in enumerate(scene.occluder_boxes_world):
+        occluder_vertices.append(
+            _plot_box(
+                ax,
+                box,
+                edge_color="#A6611A",
+                face_color="#E0B26D",
+                alpha=0.18,
+                label="occluders" if idx == 0 else None,
+            )
+        )
+
+    for strip in np.unique(strip_ids_array):
+        strip_mask = strip_ids_array == strip
+        strip_indices = np.flatnonzero(strip_mask)
+        order = strip_indices[np.argsort(scene.true_centers_world[strip_indices, 1])]
+        path_points = scene.true_centers_world[order]
+        ax.plot(
+            path_points[:, 0],
+            path_points[:, 1],
+            path_points[:, 2],
+            color=strip_palette[int(strip) % len(strip_palette)],
+            linewidth=2.0,
+            alpha=0.95,
+            label=strip_names.get(int(strip), f"strip {int(strip) + 1}"),
+        )
+
+    path_extent = np.ptp(scene.true_centers_world, axis=0)
+    frustum_depth = float(np.clip(0.22 * np.linalg.norm(path_extent), 1.6, 4.2))
+    frustum_points = []
+    optimized_label_drawn = False
+    for view_idx, (center, params) in enumerate(zip(scene.true_centers_world, scene.true_params)):
+        if view_idx < scene.fixed_view_count:
+            frustum_points.append(
+                _plot_camera_frustum(
+                    ax,
+                    center,
+                    params,
+                    scene.camera.width,
+                    scene.camera.height,
+                    scene.camera.f,
+                    frustum_depth,
+                    edge_color="#222222",
+                    face_color="#D9D9D9",
+                    alpha=0.28,
+                    label="fixed anchor frustums" if view_idx == 0 else None,
+                )
+            )
+            ax.scatter(
+                [center[0]],
+                [center[1]],
+                [center[2]],
+                s=28,
+                marker="o",
+                c="#222222",
+                depthshade=False,
+            )
+            continue
+
+        strip = int(strip_ids_array[view_idx])
+        color = strip_palette[strip % len(strip_palette)]
+        frustum_points.append(
+            _plot_camera_frustum(
+                ax,
+                center,
+                params,
+                scene.camera.width,
+                scene.camera.height,
+                scene.camera.f,
+                frustum_depth,
+                edge_color=color,
+                face_color=color,
+                alpha=0.16,
+                label="optimized frustums" if not optimized_label_drawn else None,
+            )
+        )
+        optimized_label_drawn = True
+        ax.scatter(
+            [center[0]],
+            [center[1]],
+            [center[2]],
+            s=24,
+            marker="o",
+            c=color,
+            depthshade=False,
+        )
+
+    point_low = np.percentile(scene.points_world, 1.5, axis=0)
+    point_high = np.percentile(scene.points_world, 98.5, axis=0)
+    all_points = np.vstack([point_low, point_high, scene.true_centers_world, np.vstack(frustum_points)])
+    if occluder_vertices:
+        all_points = np.vstack([all_points, np.vstack(occluder_vertices)])
+    _set_equal_3d(ax, all_points, padding=0.16)
+    # Exp5 uses a down-positive world z convention so the UAV cameras can keep
+    # a physically reasonable "look downward" direction without degenerating
+    # into 180-degree roll/pitch solutions.
+    ax.invert_zaxis()
+
+    ax.set_title(title)
+    ax.set_xlabel("world x")
+    ax.set_ylabel("world y")
+    ax.set_zlabel("world z (down)")
+    ax.legend(loc="upper left", fontsize=8)
+    colorbar = fig.colorbar(scatter, ax=ax, shrink=0.76, pad=0.08)
+    colorbar.set_label("track length (views)")
+    fig.tight_layout()
+    fig.savefig(path, dpi=180)
+    plt.close(fig)
+
+
+def save_airborne_strip_plan_plot(
+    scene: FreeXYZBAScene,
+    strip_ids: tuple[int, ...],
+    path: Path,
+    title: str,
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(8.2, 7.0))
+
+    strip_ids_array = np.array(strip_ids, dtype=int)
+    strip_palette = ["#F58518", "#4C78A8", "#54A24B", "#E45756"]
+    strip_names = {0: "west strip", 1: "center strip", 2: "east strip"}
+
+    scatter = ax.scatter(
+        scene.points_world[:, 0],
+        scene.points_world[:, 1],
+        c=scene.points_world[:, 2],
+        s=18,
+        cmap="viridis",
+        alpha=0.48,
+        label="landmarks",
+    )
+
+    for idx, box in enumerate(scene.occluder_boxes_world):
+        rect = Rectangle(
+            (box[0], box[2]),
+            box[1] - box[0],
+            box[3] - box[2],
+            facecolor="#E0B26D",
+            edgecolor="#A6611A",
+            linewidth=1.2,
+            alpha=0.18,
+            label="occluder footprints" if idx == 0 else None,
+        )
+        ax.add_patch(rect)
+
+    for strip in np.unique(strip_ids_array):
+        strip_mask = strip_ids_array == strip
+        strip_indices = np.flatnonzero(strip_mask)
+        order = strip_indices[np.argsort(scene.true_centers_world[strip_indices, 1])]
+        path_points = scene.true_centers_world[order]
+        color = strip_palette[int(strip) % len(strip_palette)]
+        ax.plot(
+            path_points[:, 0],
+            path_points[:, 1],
+            color=color,
+            linewidth=2.1,
+            label=strip_names.get(int(strip), f"strip {int(strip) + 1}"),
+        )
+        for view_idx in order:
+            center = scene.true_centers_world[view_idx]
+            optical_axis_xy = _camera_axes_world(scene.true_params[view_idx])[:2, 2]
+            optical_axis_xy /= max(np.linalg.norm(optical_axis_xy), 1e-12)
+            ax.quiver(
+                center[0],
+                center[1],
+                optical_axis_xy[0],
+                optical_axis_xy[1],
+                angles="xy",
+                scale_units="xy",
+                scale=0.20,
+                color=color if view_idx >= scene.fixed_view_count else "#222222",
+                width=0.0045,
+                alpha=0.88,
+            )
+
+    fixed = scene.true_centers_world[: scene.fixed_view_count]
+    opt = scene.true_centers_world[scene.fixed_view_count :]
+    ax.scatter(
+        fixed[:, 0],
+        fixed[:, 1],
+        s=82,
+        c="#222222",
+        edgecolors="white",
+        linewidths=0.8,
+        label="fixed anchors",
+        zorder=4,
+    )
+    ax.scatter(
+        opt[:, 0],
+        opt[:, 1],
+        s=54,
+        c=[strip_palette[int(strip_ids_array[idx + scene.fixed_view_count]) % len(strip_palette)] for idx in range(opt.shape[0])],
+        edgecolors="black",
+        linewidths=0.5,
+        label="optimized views",
+        zorder=4,
+    )
+
+    ax.set_aspect("equal", adjustable="box")
+    ax.set_title(title)
+    ax.set_xlabel("world x")
+    ax.set_ylabel("world y")
+    ax.grid(True, alpha=0.25)
+    ax.legend(loc="upper left", fontsize=8)
+    colorbar = fig.colorbar(scatter, ax=ax, shrink=0.82, pad=0.02)
+    colorbar.set_label("point height (world z)")
     fig.tight_layout()
     fig.savefig(path, dpi=180)
     plt.close(fig)

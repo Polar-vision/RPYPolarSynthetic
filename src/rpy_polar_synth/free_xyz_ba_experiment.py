@@ -672,79 +672,94 @@ def optimize_free_xyz_staged(
     scene: FreeXYZBAScene,
     initial_x: np.ndarray,
     max_nfev_per_stage: int = 110,
+    staged_cycles: int = 1,
+    final_use_sparsity: bool = True,
 ) -> FreeXYZBAResult:
     params_opt0, centers_opt0, points0 = _unpack_state(initial_x, scene)
     n_opt = _n_opt_views(scene)
+    roll_pitch = params_opt0[:, :2].copy()
+    yaw = params_opt0[:, 2].copy()
+    stage_success = True
+    stage_nfev = 0
+    stage_messages: list[str] = []
 
-    def theta_stage(roll_pitch: np.ndarray) -> np.ndarray:
-        params_opt = params_opt0.copy()
-        params_opt[:, :2] = roll_pitch.reshape(n_opt, 2)
-        x = _pack_state(params_opt, centers_opt0, points0)
-        return free_xyz_polar_residual(
-            x,
-            scene,
-            covariance_aware=True,
-            gate_axis=True,
-            theta_only=True,
+    for cycle_idx in range(staged_cycles):
+        def theta_stage(roll_pitch_flat: np.ndarray) -> np.ndarray:
+            params_opt = np.column_stack([roll_pitch_flat.reshape(n_opt, 2), yaw])
+            x = _pack_state(params_opt, centers_opt0, points0)
+            return free_xyz_polar_residual(
+                x,
+                scene,
+                covariance_aware=True,
+                gate_axis=True,
+                theta_only=True,
+            )
+
+        stage1 = least_squares(
+            theta_stage,
+            roll_pitch.ravel(),
+            method="trf",
+            loss="huber",
+            f_scale=2.5,
+            max_nfev=max_nfev_per_stage,
+        )
+        roll_pitch = stage1.x.reshape(n_opt, 2)
+
+        def phi_stage(yaw_vec: np.ndarray) -> np.ndarray:
+            params_opt = np.column_stack([roll_pitch, yaw_vec])
+            x = _pack_state(params_opt, centers_opt0, points0)
+            return free_xyz_polar_residual(
+                x,
+                scene,
+                covariance_aware=True,
+                gate_axis=True,
+                phi_only=True,
+            )
+
+        stage2 = least_squares(
+            phi_stage,
+            yaw,
+            method="trf",
+            loss="huber",
+            f_scale=2.5,
+            max_nfev=max_nfev_per_stage,
+        )
+        yaw = stage2.x
+        stage_success = bool(stage_success and stage1.success and stage2.success)
+        stage_nfev += int(stage1.nfev + stage2.nfev)
+        stage_messages.append(
+            f"cycle{cycle_idx + 1}.theta={stage1.message}; cycle{cycle_idx + 1}.phi={stage2.message}"
         )
 
-    stage1 = least_squares(
-        theta_stage,
-        params_opt0[:, :2].ravel(),
-        method="trf",
-        loss="huber",
-        f_scale=2.5,
-        max_nfev=max_nfev_per_stage,
-    )
-
-    roll_pitch1 = stage1.x.reshape(n_opt, 2)
-
-    def phi_stage(yaw: np.ndarray) -> np.ndarray:
-        params_opt = np.column_stack([roll_pitch1, yaw])
-        x = _pack_state(params_opt, centers_opt0, points0)
-        return free_xyz_polar_residual(
-            x,
-            scene,
-            covariance_aware=True,
-            gate_axis=True,
-            phi_only=True,
-        )
-
-    stage2 = least_squares(
-        phi_stage,
-        params_opt0[:, 2].copy(),
-        method="trf",
-        loss="huber",
-        f_scale=2.5,
-        max_nfev=max_nfev_per_stage,
-    )
-
-    staged_params_opt = np.column_stack([roll_pitch1, stage2.x])
+    staged_params_opt = np.column_stack([roll_pitch, yaw])
     staged_params_all, _, _ = _assemble_full_state(staged_params_opt, centers_opt0, points0, scene)
     staged_x = _pack_state(staged_params_opt, centers_opt0, points0)
     staged_pose_error = _max_rotation_error_deg(staged_params_all, scene)
     staged_structure_rel_rmse = _structure_rel_rmse(points0, scene)
 
+    final_kwargs = {}
+    if final_use_sparsity:
+        final_kwargs["jac_sparsity"] = free_xyz_ba_sparsity(scene)
     final = least_squares(
         lambda x: free_xyz_polar_residual(x, scene, covariance_aware=True, gate_axis=True),
         staged_x,
-        jac_sparsity=free_xyz_ba_sparsity(scene),
         method="trf",
         loss="huber",
         f_scale=2.5,
         x_scale="jac",
         max_nfev=max_nfev_per_stage,
+        **final_kwargs,
     )
 
-    success = bool(stage1.success and stage2.success and final.success)
-    message = f"stage1={stage1.message}; stage2={stage2.message}; final={final.message}"
+    success = bool(stage_success and final.success)
+    message = "; ".join(stage_messages + [f"final={final.message}"])
     return summarize_free_xyz_result(
         "xyz_polar_staged",
         final.x,
         scene,
         final.cost,
         success,
-        stage1.nfev + stage2.nfev + final.nfev,
+        stage_nfev + final.nfev,
         message,
         stage_rotation_error_deg=staged_pose_error,
         stage_structure_rel_rmse=staged_structure_rel_rmse,
@@ -793,6 +808,8 @@ def run_free_xyz_monte_carlo(
     tilt_error_deg: float = 18.0,
     translation_error_m: float = 0.24,
     seed: int = 181,
+    staged_cycles: int = 1,
+    staged_final_use_sparsity: bool = True,
 ) -> list[dict[str, float | str | bool | int]]:
     if yaw_errors_deg is None:
         yaw_errors_deg = [0.0, 30.0, 60.0, 100.0, 140.0]
@@ -818,7 +835,12 @@ def run_free_xyz_monte_carlo(
 
             for method in methods:
                 if method == "xyz_polar_staged":
-                    result = optimize_free_xyz_staged(scene, initial_x)
+                    result = optimize_free_xyz_staged(
+                        scene,
+                        initial_x,
+                        staged_cycles=staged_cycles,
+                        final_use_sparsity=staged_final_use_sparsity,
+                    )
                 else:
                     result = optimize_free_xyz_joint(method, scene, initial_x)
 
