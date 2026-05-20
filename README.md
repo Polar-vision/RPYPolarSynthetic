@@ -69,9 +69,11 @@ RPYPolarSynthetic/
     monte_carlo_summary.png
   outputs_ba/
     ba_monte_carlo_results.csv
+    ba_scene_3d.png
     ba_monte_carlo_summary.png
   outputs_exp3/
     exp3_monte_carlo_results.csv
+    exp3_scene_3d.png
     exp3_monte_carlo_summary.png
 ```
 
@@ -354,6 +356,29 @@ However, this is still synthetic evidence. A stronger paper-level claim should a
 
 Visualization:
 
+![Experiment 2 scene](outputs_ba/ba_scene_3d.png)
+
+### Figure Interpretation
+
+`ba_scene_3d.png` visualizes the two-view inverse-depth BA stress-test geometry. Points are colored by true depth, faint gray rays show the anchor-view inverse-depth anchoring, the red/green/blue axes are the camera `x/y/optical-axis` directions, and black `x` markers denote correspondences whose target-view measurements are shuffled into outliers.
+
+Key reading:
+
+- The anchor camera sits at the world origin, while the second camera provides a single off-axis baseline. So this is already a coupled pose-depth BA problem, but still with only one target view.
+- The point cloud spans a broad depth range rather than a thin depth shell, which makes inverse-depth variables genuinely heterogeneous and able to interact strongly with pose.
+- The anchor rays spread over both near-axis and off-axis regions, so the same theta/phi reliability story from Experiment 1 still matters inside BA instead of disappearing in a narrow-FOV corner case.
+- Outlier-corrupted correspondences are sparse and spatially distributed, making the stress test mildly contaminated but not dominated by gross mismatch failure.
+
+What it supports:
+
+- The optimizer really is facing the intended inverse-depth BA coupling, not a trivial pose-only refinement.
+- The staged method gets a fair chance to help because the scene contains both depth variation and angular variation.
+
+What it does not prove:
+
+- This figure alone does not explain which optimizer will converge; that evidence comes from the Monte-Carlo summary below.
+- Translation is still known in Experiment 2, so this remains simpler than a real local BA window.
+
 ![BA Monte-Carlo summary](outputs_ba/ba_monte_carlo_summary.png)
 
 ### Figure Interpretation
@@ -491,6 +516,29 @@ At the same time, this experiment also exposes a real limitation instead of hidi
 
 Visualization:
 
+![Experiment 3 scene](outputs_exp3/exp3_scene_3d.png)
+
+### Figure Interpretation
+
+`exp3_scene_3d.png` shows the synthetic local BA window used in Experiment 3. Points are colored by true depth, the dashed polyline connects the anchor view and the two later camera centers, the red/green/blue axes denote each camera's `x/y/optical-axis` directions, and black `x` markers identify tracks whose later-view observations are shuffled into outliers.
+
+Key reading:
+
+- Compared with Experiment 2, the scene now contains two later poses instead of one, so each landmark participates in a short multi-view window rather than a single target-view match.
+- The camera path is short and roughly forward-looking, which is realistic for a local BA window but also explains why translation direction remains much weaker than rotation.
+- The point cloud still spans a wide depth range and broad bearing angles, so the staged theta/phi story is tested together with more realistic pose-depth-scale coupling instead of being isolated in a tiny toy geometry.
+- Mild track outliers are present across the later views, so the final BA still has to operate under imperfect correspondences.
+
+What it supports:
+
+- Experiment 3 is geometrically closer to the README's intended local-BA story: noisy measurements, multiple later views, and unknown translations all coexist in one window.
+- The scene is challenging without being pathological; it looks like a short monocular window, not an artificial pure-rotation case.
+
+What it does not prove:
+
+- The plot does not directly show anchor-view noise or weak baseline-length priors; those enter through the measurement model and optimization.
+- It still does not make translation direction well observed, which is why the translation metric remains diagnostic.
+
 ![Experiment 3 Monte-Carlo summary](outputs_exp3/exp3_monte_carlo_summary.png)
 
 ### Figure Interpretation
@@ -561,3 +609,4 @@ Suggested version labels:
 | `v0.2.3-summary-readability` | Monte-Carlo subplot explanations and de-overlapped summary curves |
 | `v0.2.4-monte-carlo-metadata` | explicit Monte-Carlo trial counts and aggregation metadata in summary figures |
 | `v0.3.0-realistic-ba-window` | three-view local BA stress test with unknown translations and weak baseline-length priors |
+| `v0.3.1-ba-scene-figures` | Experiment 2/3 scene visualizations, figure interpretation, and synchronized outputs |

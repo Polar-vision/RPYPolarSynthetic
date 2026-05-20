@@ -46,6 +46,7 @@ class RealisticBAScenarioConfig:
 
 @dataclass
 class RealisticBAScene:
+    points_world: np.ndarray
     anchor_bearings: np.ndarray
     true_depths: np.ndarray
     observed_pixels1: np.ndarray
@@ -237,6 +238,7 @@ def make_realistic_ba_scene(
     )
 
     return RealisticBAScene(
+        points_world=np.array(points_world),
         anchor_bearings=anchor_bearings,
         true_depths=true_depths,
         observed_pixels1=observed_pixels1,

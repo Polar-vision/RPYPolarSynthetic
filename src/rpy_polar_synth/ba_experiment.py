@@ -36,6 +36,7 @@ class BAScenarioConfig:
 
 @dataclass
 class BAScene:
+    points_world: np.ndarray
     anchor_bearings: np.ndarray
     true_depths: np.ndarray
     center2_world: np.ndarray
@@ -135,6 +136,7 @@ def make_ba_scene(
     phi_gates = np.clip(np.sin(observed_polar2[:, 0]) / gate_start, 0.0, 1.0)
 
     return BAScene(
+        points_world=anchor_bearings * true_depths[:, None],
         anchor_bearings=anchor_bearings,
         true_depths=true_depths,
         center2_world=center2,

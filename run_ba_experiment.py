@@ -17,7 +17,7 @@ from rpy_polar_synth.ba_experiment import (  # noqa: E402
     write_ba_csv,
 )
 from rpy_polar_synth.experiment import CameraConfig  # noqa: E402
-from rpy_polar_synth.visualize import save_ba_summary  # noqa: E402
+from rpy_polar_synth.visualize import save_ba_scene_plot, save_ba_summary  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
@@ -44,11 +44,12 @@ def main() -> None:
 
     args.output.mkdir(parents=True, exist_ok=True)
     write_ba_csv(records, args.output / "ba_monte_carlo_results.csv")
+    save_ba_scene_plot(scene, args.output / "ba_scene_3d.png")
     save_ba_summary(records_array, args.output / "ba_monte_carlo_summary.png")
 
     print(f"Done. BA results saved to: {args.output}")
     print("Key files:")
-    for name in ["ba_monte_carlo_results.csv", "ba_monte_carlo_summary.png"]:
+    for name in ["ba_monte_carlo_results.csv", "ba_scene_3d.png", "ba_monte_carlo_summary.png"]:
         print(f"  - {args.output / name}")
 
 

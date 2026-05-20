@@ -5,8 +5,10 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
+from .ba_experiment import BAScene
 from .experiment import SyntheticScene
 from .geometry import rpy_matrix
+from .realistic_ba_experiment import RealisticBAScene
 
 
 COLORS = {
@@ -102,6 +104,208 @@ def _monte_carlo_metadata(records: np.ndarray) -> tuple[int, int, int]:
     n_trials = int(min(trial_counts)) if trial_counts else 0
     n_methods = int(len(np.unique(records["method"])))
     return n_trials, int(len(yaw_levels)), n_methods
+
+
+def _camera_axes_world(params: np.ndarray) -> np.ndarray:
+    return rpy_matrix(params).T @ np.eye(3)
+
+
+def _set_equal_3d(ax, points: np.ndarray, padding: float = 0.12) -> None:
+    mins = points.min(axis=0)
+    maxs = points.max(axis=0)
+    center = 0.5 * (mins + maxs)
+    half_span = 0.5 * np.max(maxs - mins)
+    half_span = max(half_span * (1.0 + padding), 1.0)
+    ax.set_xlim(center[0] - half_span, center[0] + half_span)
+    ax.set_ylim(center[1] - half_span, center[1] + half_span)
+    ax.set_zlim(center[2] - half_span, center[2] + half_span)
+    ax.set_box_aspect((1.0, 1.0, 1.0))
+
+
+def _plot_camera_frame(
+    ax,
+    center: np.ndarray,
+    params: np.ndarray,
+    axis_length: float,
+    label: str,
+    marker_color: str,
+) -> None:
+    ax.scatter(
+        [center[0]],
+        [center[1]],
+        [center[2]],
+        s=34,
+        c=marker_color,
+        edgecolors="black",
+        linewidths=0.5,
+    )
+    axes = _camera_axes_world(params)
+    for idx, color in enumerate(["#D62728", "#2CA02C", "#1F77B4"]):
+        direction = axes[:, idx] * axis_length
+        ax.quiver(
+            center[0],
+            center[1],
+            center[2],
+            direction[0],
+            direction[1],
+            direction[2],
+            color=color,
+            linewidth=2.2 if idx == 2 else 1.5,
+            arrow_length_ratio=0.12,
+        )
+    text_offset = np.array([0.06, 0.06, 0.06]) * axis_length
+    ax.text(*(center + text_offset), label, fontsize=8, color=marker_color)
+
+
+def _plot_anchor_rays(ax, points_world: np.ndarray, max_rays: int = 18) -> None:
+    if points_world.size == 0:
+        return
+    indices = np.linspace(0, points_world.shape[0] - 1, min(points_world.shape[0], max_rays), dtype=int)
+    for idx, point in enumerate(points_world[indices]):
+        ax.plot(
+            [0.0, point[0]],
+            [0.0, point[1]],
+            [0.0, point[2]],
+            color="#B8B8B8",
+            linewidth=0.9,
+            alpha=0.35,
+            label="anchor rays" if idx == 0 else None,
+        )
+
+
+def save_ba_scene_plot(scene: BAScene, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    points_world = scene.points_world
+
+    fig = plt.figure(figsize=(8.4, 6.4))
+    ax = fig.add_subplot(111, projection="3d")
+
+    scatter = ax.scatter(
+        points_world[:, 0],
+        points_world[:, 1],
+        points_world[:, 2],
+        c=scene.true_depths,
+        s=16,
+        cmap="viridis",
+        alpha=0.88,
+        label="scene points",
+    )
+    outlier_points = points_world[~scene.inlier_mask]
+    if outlier_points.size:
+        ax.scatter(
+            outlier_points[:, 0],
+            outlier_points[:, 1],
+            outlier_points[:, 2],
+            c="black",
+            marker="x",
+            s=36,
+            linewidths=1.0,
+            label="shuffled-track outliers",
+        )
+
+    _plot_anchor_rays(ax, points_world)
+    _plot_camera_frame(ax, np.zeros(3), np.zeros(3), axis_length=0.45, label="anchor view", marker_color="#333333")
+    _plot_camera_frame(
+        ax,
+        scene.center2_world,
+        scene.true_params,
+        axis_length=0.45,
+        label="target view",
+        marker_color="#9467BD",
+    )
+
+    baseline = np.vstack([np.zeros(3), scene.center2_world])
+    ax.plot(
+        baseline[:, 0],
+        baseline[:, 1],
+        baseline[:, 2],
+        color="#666666",
+        linestyle="--",
+        linewidth=1.5,
+        label="camera baseline",
+    )
+
+    all_points = np.vstack([points_world, np.zeros(3), scene.center2_world])
+    _set_equal_3d(ax, all_points)
+    ax.set_title("Experiment 2 synthetic scene")
+    ax.set_xlabel("world x")
+    ax.set_ylabel("world y")
+    ax.set_zlabel("world z")
+    ax.legend(loc="upper left", fontsize=8)
+    colorbar = fig.colorbar(scatter, ax=ax, shrink=0.76, pad=0.08)
+    colorbar.set_label("true depth (m)")
+    fig.tight_layout()
+    fig.savefig(path, dpi=180)
+    plt.close(fig)
+
+
+def save_realistic_ba_scene_plot(scene: RealisticBAScene, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    points_world = scene.points_world
+
+    fig = plt.figure(figsize=(8.8, 6.4))
+    ax = fig.add_subplot(111, projection="3d")
+
+    scatter = ax.scatter(
+        points_world[:, 0],
+        points_world[:, 1],
+        points_world[:, 2],
+        c=scene.true_depths,
+        s=16,
+        cmap="plasma",
+        alpha=0.88,
+        label="scene points",
+    )
+    outlier_points = points_world[~scene.inlier_mask]
+    if outlier_points.size:
+        ax.scatter(
+            outlier_points[:, 0],
+            outlier_points[:, 1],
+            outlier_points[:, 2],
+            c="black",
+            marker="x",
+            s=36,
+            linewidths=1.0,
+            label="shuffled-track outliers",
+        )
+
+    _plot_anchor_rays(ax, points_world, max_rays=22)
+    _plot_camera_frame(ax, np.zeros(3), np.zeros(3), axis_length=0.42, label="anchor view", marker_color="#333333")
+
+    camera_colors = ["#9467BD", "#8C564B"]
+    for view, (center, params) in enumerate(zip(scene.true_centers_world, scene.true_params), start=2):
+        _plot_camera_frame(
+            ax,
+            center,
+            params,
+            axis_length=0.42,
+            label=f"view {view}",
+            marker_color=camera_colors[(view - 2) % len(camera_colors)],
+        )
+
+    camera_path = np.vstack([np.zeros(3), scene.true_centers_world])
+    ax.plot(
+        camera_path[:, 0],
+        camera_path[:, 1],
+        camera_path[:, 2],
+        color="#666666",
+        linestyle="--",
+        linewidth=1.5,
+        label="camera baseline path",
+    )
+
+    all_points = np.vstack([points_world, np.zeros(3), scene.true_centers_world])
+    _set_equal_3d(ax, all_points)
+    ax.set_title("Experiment 3 synthetic local BA window")
+    ax.set_xlabel("world x")
+    ax.set_ylabel("world y")
+    ax.set_zlabel("world z")
+    ax.legend(loc="upper left", fontsize=8)
+    colorbar = fig.colorbar(scatter, ax=ax, shrink=0.76, pad=0.08)
+    colorbar.set_label("true depth (m)")
+    fig.tight_layout()
+    fig.savefig(path, dpi=180)
+    plt.close(fig)
 
 
 def save_scene_plot(scene: SyntheticScene, path: Path) -> None:

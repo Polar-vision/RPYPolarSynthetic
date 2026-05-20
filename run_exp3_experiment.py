@@ -17,7 +17,7 @@ from rpy_polar_synth.realistic_ba_experiment import (  # noqa: E402
     run_realistic_ba_monte_carlo,
     write_realistic_ba_csv,
 )
-from rpy_polar_synth.visualize import save_realistic_ba_summary  # noqa: E402
+from rpy_polar_synth.visualize import save_realistic_ba_scene_plot, save_realistic_ba_summary  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
@@ -44,11 +44,12 @@ def main() -> None:
 
     args.output.mkdir(parents=True, exist_ok=True)
     write_realistic_ba_csv(records, args.output / "exp3_monte_carlo_results.csv")
+    save_realistic_ba_scene_plot(scene, args.output / "exp3_scene_3d.png")
     save_realistic_ba_summary(records_array, args.output / "exp3_monte_carlo_summary.png")
 
     print(f"Done. Experiment 3 results saved to: {args.output}")
     print("Key files:")
-    for name in ["exp3_monte_carlo_results.csv", "exp3_monte_carlo_summary.png"]:
+    for name in ["exp3_monte_carlo_results.csv", "exp3_scene_3d.png", "exp3_monte_carlo_summary.png"]:
         print(f"  - {args.output / name}")
 
 
