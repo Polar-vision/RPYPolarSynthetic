@@ -7,6 +7,7 @@ import numpy as np
 
 from .ba_experiment import BAScene
 from .experiment import SyntheticScene
+from .free_xyz_ba_experiment import FreeXYZBAScene
 from .geometry import rpy_matrix
 from .realistic_ba_experiment import RealisticBAScene
 
@@ -20,6 +21,9 @@ COLORS = {
     "ba_polar_plain_joint": "#F58518",
     "ba_polar_cov_joint": "#54A24B",
     "ba_polar_staged": "#B279A2",
+    "xyz_uv_joint": "#4C78A8",
+    "xyz_polar_cov_joint": "#54A24B",
+    "xyz_polar_staged": "#B279A2",
 }
 
 LABELS = {
@@ -31,6 +35,9 @@ LABELS = {
     "ba_polar_plain_joint": "BA plain polar",
     "ba_polar_cov_joint": "BA cov-aware polar",
     "ba_polar_staged": "BA staged polar",
+    "xyz_uv_joint": "free-XYZ UV joint",
+    "xyz_polar_cov_joint": "free-XYZ cov-aware polar",
+    "xyz_polar_staged": "free-XYZ staged polar",
 }
 
 
@@ -43,6 +50,9 @@ MARKERS = {
     "ba_polar_plain_joint": "s",
     "ba_polar_cov_joint": "^",
     "ba_polar_staged": "D",
+    "xyz_uv_joint": "o",
+    "xyz_polar_cov_joint": "^",
+    "xyz_polar_staged": "D",
 }
 
 
@@ -55,6 +65,9 @@ LINESTYLES = {
     "ba_polar_plain_joint": "--",
     "ba_polar_cov_joint": "-.",
     "ba_polar_staged": ":",
+    "xyz_uv_joint": "-",
+    "xyz_polar_cov_joint": "-.",
+    "xyz_polar_staged": ":",
 }
 
 
@@ -805,6 +818,156 @@ def save_realistic_ba_summary(records: np.ndarray, path: Path) -> None:
         final.append(np.median(staged["rotation_error_deg"][mask]))
     ax.plot(yaws, initial, marker="o", label="initial", color="#777777")
     ax.plot(yaws, after_stage, marker="o", label="after staged init", color=COLORS["ba_polar_staged"])
+    ax.plot(yaws, final, marker="o", label="after joint BA", color="#222222")
+    ax.set_yscale("log")
+    ax.set_title("What staged initialization changes")
+    ax.set_xlabel("initial yaw error (deg)")
+    ax.set_ylabel("median pose error (deg)")
+    ax.grid(True, which="both", alpha=0.25)
+    ax.legend(fontsize=8)
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(path, dpi=180)
+    plt.close(fig)
+
+
+def save_free_xyz_scene_plot(scene: FreeXYZBAScene, path: Path, title: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig = plt.figure(figsize=(8.8, 6.5))
+    ax = fig.add_subplot(111, projection="3d")
+
+    scatter = ax.scatter(
+        scene.points_world[:, 0],
+        scene.points_world[:, 1],
+        scene.points_world[:, 2],
+        c=scene.track_lengths,
+        s=16,
+        cmap="viridis",
+        alpha=0.88,
+        label="landmarks",
+    )
+
+    path_points = scene.true_centers_world
+    ax.plot(
+        path_points[:, 0],
+        path_points[:, 1],
+        path_points[:, 2],
+        color="#666666",
+        linestyle="--",
+        linewidth=1.5,
+        label="camera path",
+    )
+
+    for view, (center, params) in enumerate(zip(scene.true_centers_world, scene.true_params)):
+        marker_color = "#333333" if view < scene.fixed_view_count else "#9467BD"
+        label = f"view {view + 1}"
+        if view < scene.fixed_view_count:
+            label += " (fixed)"
+        else:
+            label += " (optimized)"
+        _plot_camera_frame(ax, center, params, axis_length=0.36, label=label, marker_color=marker_color)
+
+    all_points = np.vstack([scene.points_world, scene.true_centers_world])
+    _set_equal_3d(ax, all_points)
+    ax.set_title(title)
+    ax.set_xlabel("world x")
+    ax.set_ylabel("world y")
+    ax.set_zlabel("world z")
+    ax.legend(loc="upper left", fontsize=8)
+    colorbar = fig.colorbar(scatter, ax=ax, shrink=0.76, pad=0.08)
+    colorbar.set_label("track length (views)")
+    fig.tight_layout()
+    fig.savefig(path, dpi=180)
+    plt.close(fig)
+
+
+def save_free_xyz_summary(records: np.ndarray, path: Path, title: str) -> None:
+    methods = ["xyz_uv_joint", "xyz_polar_cov_joint", "xyz_polar_staged"]
+    yaw_levels = np.unique(records["yaw_init_error_deg"])
+    plot_x = _x_offsets(yaw_levels, methods)
+    n_trials, n_yaws, _ = _monte_carlo_metadata(records)
+
+    fig, axes = plt.subplots(2, 3, figsize=(15, 8), constrained_layout=True)
+    fig.suptitle(
+        f"{title}: {n_trials} trials/level, {n_trials * n_yaws} runs/method\n"
+        "Markers/curves show medians; bars show 25th-75th percentiles; x jitter is display-only.",
+        fontsize=12,
+    )
+
+    ax = axes[0, 0]
+    for i, method in enumerate(methods):
+        rates = []
+        for yaw in yaw_levels:
+            mask = (records["method"] == method) & (records["yaw_init_error_deg"] == yaw)
+            rates.append(100.0 * np.mean(records["converged"][mask]))
+        _plot_series(ax, plot_x[method], rates, method, LABELS[method], zorder=2 + i)
+    ax.set_title("BA convergence rate")
+    ax.set_xlabel("initial yaw error (deg)")
+    ax.set_ylabel("pose < 3 deg and structure rel. RMSE < 30% (%)")
+    ax.set_ylim(-3, 103)
+    ax.grid(True, alpha=0.25)
+    ax.legend(fontsize=8)
+
+    ax = axes[0, 1]
+    yaw_levels, med, spread = _aggregate_methods(records, methods, "rotation_error_deg")
+    plot_x = _x_offsets(yaw_levels, methods)
+    for i, method in enumerate(methods):
+        yerr = np.vstack([med[i] - spread[0, i], spread[1, i] - med[i]])
+        _plot_series(ax, plot_x[method], med[i], method, LABELS[method], yerr=yerr, zorder=2 + i)
+    ax.set_yscale("log")
+    ax.set_title("Final pose error")
+    ax.set_xlabel("initial yaw error (deg)")
+    ax.set_ylabel("max rotation error across optimized poses (deg)")
+    ax.grid(True, which="both", alpha=0.25)
+
+    ax = axes[0, 2]
+    yaw_levels, med, spread = _aggregate_methods(records, methods, "structure_rel_rmse")
+    plot_x = _x_offsets(yaw_levels, methods)
+    for i, method in enumerate(methods):
+        yerr = np.vstack([med[i] - spread[0, i], spread[1, i] - med[i]])
+        _plot_series(ax, plot_x[method], med[i], method, LABELS[method], yerr=yerr, zorder=2 + i)
+    ax.set_yscale("log")
+    ax.set_title("Final structure quality")
+    ax.set_xlabel("initial yaw error (deg)")
+    ax.set_ylabel("relative XYZ RMSE")
+    ax.grid(True, which="both", alpha=0.25)
+
+    ax = axes[1, 0]
+    yaw_levels, med, spread = _aggregate_methods(records, methods, "translation_error_m")
+    plot_x = _x_offsets(yaw_levels, methods)
+    for i, method in enumerate(methods):
+        yerr = np.vstack([med[i] - spread[0, i], spread[1, i] - med[i]])
+        _plot_series(ax, plot_x[method], med[i], method, LABELS[method], yerr=yerr, zorder=2 + i)
+    ax.set_yscale("log")
+    ax.set_title("Final translation error")
+    ax.set_xlabel("initial yaw error (deg)")
+    ax.set_ylabel("max center error across optimized poses (m)")
+    ax.grid(True, which="both", alpha=0.25)
+
+    ax = axes[1, 1]
+    yaw_levels, med, _ = _aggregate_methods(records, methods, "nfev")
+    plot_x = _x_offsets(yaw_levels, methods)
+    for i, method in enumerate(methods):
+        _plot_series(ax, plot_x[method], med[i], method, LABELS[method], zorder=2 + i)
+    ax.set_title("Optimizer effort")
+    ax.set_xlabel("initial yaw error (deg)")
+    ax.set_ylabel("median function evaluations")
+    ax.grid(True, alpha=0.25)
+
+    ax = axes[1, 2]
+    staged_mask = records["method"] == "xyz_polar_staged"
+    staged = records[staged_mask]
+    yaws = np.unique(staged["yaw_init_error_deg"])
+    initial = []
+    after_stage = []
+    final = []
+    for yaw in yaws:
+        mask = staged["yaw_init_error_deg"] == yaw
+        initial.append(np.median(staged["initial_rotation_error_deg"][mask]))
+        after_stage.append(np.median(staged["stage_rotation_error_deg"][mask]))
+        final.append(np.median(staged["rotation_error_deg"][mask]))
+    ax.plot(yaws, initial, marker="o", label="initial", color="#777777")
+    ax.plot(yaws, after_stage, marker="o", label="after staged init", color=COLORS["xyz_polar_staged"])
     ax.plot(yaws, final, marker="o", label="after joint BA", color="#222222")
     ax.set_yscale("log")
     ax.set_title("What staged initialization changes")
