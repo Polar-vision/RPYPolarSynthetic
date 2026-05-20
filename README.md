@@ -148,6 +148,54 @@ Even after the residual becomes covariance-aware, the hard BA problems in this r
 
 That is why `polar_staged` is not just another residual choice. It is a search-strategy change.
 
+### What Problem Does `polar_staged` Actually Solve?
+
+`polar_staged` does **not** primarily solve the optical-axis singularity problem. That problem is addressed earlier, inside the covariance-aware polar residual itself through:
+
+- `phi` wrapping;
+- propagated polar covariance;
+- and down-weighting `phi` near the optical axis.
+
+So the main job of `polar_staged` is different:
+
+- it addresses **bad initialization under strong coupling**;
+- it reduces the chance that a direct joint solve enters the wrong basin;
+- it prevents the hardest coupled variables from absorbing orientation error too early.
+
+In other words:
+
+- `polar_cov_joint` makes the polar residual statistically usable;
+- `polar_staged` makes the optimization path more robust when the state is hard to initialize.
+
+This is why the staged method becomes important mainly in BA-style problems rather than in the cleanest pose-only sanity check.
+
+More concretely, the repository is targeting situations where:
+
+- the initial optical-axis yaw can be very wrong;
+- tilt and yaw are not the only unknowns;
+- depth, inverse depth, translation, or free `XYZ` structure can compensate for pose error if they are released too early.
+
+That is the key failure mode behind the staged design:
+
+```text
+wrong pose init
+-> direct joint optimization lets coupled variables absorb the error
+-> optimizer enters a wrong basin
+-> a good residual alone may not recover the correct solution
+```
+
+The staged answer is:
+
+```text
+first fix tilt using theta-only information
+then fix optical-axis yaw using phi-only information
+only then release the full coupled BA state
+```
+
+So `polar_staged` should be understood mainly as a **basin-rescue mechanism for coupled BA**, not merely as a singularity fix and not merely as a large-yaw trick.
+
+The current experiments do use large initial yaw error as the main stress axis, so that is where the advantage is most visible. But the deeper reason is not the yaw variable by itself. The deeper reason is that poor pose initialization can be mis-explained by other coupled variables if the optimizer is allowed to move everything at once.
+
 ### How `polar_staged` Works
 
 The generic staged pattern is:
@@ -1097,3 +1145,4 @@ Suggested version labels:
 | `v0.5.0-exp5-uav-oblique-strips` | Experiment 5 UAV-style oblique multi-strip free-XYZ BA with new scene figures, plan-view layout, outputs, and analysis |
 | `v0.5.1-readme-sync` | README synchronization for Experiment 5, updated reproducibility instructions, and repository version bookkeeping |
 | `v0.5.2-why-polar-why-staged` | text-only README method-introduction chapter explaining the evolution from `uv_joint` to `polar_staged` and the staged BA logic |
+| `v0.5.3-polar-staged-problem-statement` | README clarification of what problem `polar_staged` actually solves, separating residual design from optimization-basin rescue |
