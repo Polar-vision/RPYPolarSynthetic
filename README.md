@@ -595,7 +595,9 @@ Design:
 - all later camera poses and all 3D landmarks are optimized jointly;
 - landmarks are free `XYZ` variables in world coordinates;
 - initial landmarks are triangulated only from the first two fixed reference views;
-- two geometric regimes are compared: a short-window `local BA` regime and a longer-path `global BA` regime.
+- two geometric regimes are compared: a short-window `local BA` regime and a longer-path `global BA` regime;
+- the camera trajectories now use wider, more realistic forward motion and are visualized as frustums;
+- the observation graph is no longer full-visibility: later-view tracks can terminate early, and explicit occluder boxes remove some observations along the line of sight.
 
 Optimized state:
 
@@ -618,7 +620,7 @@ max rotation error across optimized poses < 3 deg
 and structure relative RMSE < 30%
 ```
 
-The structure threshold is deliberately looser than in the inverse-depth experiments, because a short-window free-XYZ BA problem is much less directly constrained than an anchored inverse-depth one.
+The structure threshold is deliberately looser than in the inverse-depth experiments, because a sparsified free-`XYZ` BA problem is much less directly constrained than an anchored inverse-depth one.
 
 ### Local BA Regime
 
@@ -630,9 +632,13 @@ Configuration:
 | Fixed reference views | 2 |
 | Optimized later views | 3 |
 | Points | 120 |
-| Observations | 600 |
-| Median track length | 5 |
-| Scene scale | 11.691 m |
+| Observations | 439 |
+| Median track length | 4 |
+| Track histogram | `{3: 59, 4: 43, 5: 18}` |
+| Gap histogram | `{0: 112, 1: 8}` |
+| Gapful points | `8 / 120` |
+| Path length | 3.859 m |
+| Scene scale | 27.029 m |
 | Yaw initialization errors | `0, 30, 60, 100, 140` deg |
 | Trials per level | 4 |
 | Output files | `exp4_local_*` |
@@ -641,21 +647,22 @@ Results:
 
 | Method | Convergence | Median pose error | Median translation error | Median structure rel. RMSE | Median function evals |
 |---|---:|---:|---:|---:|---:|
-| `xyz_uv_joint` | 35.0% | 1.085 deg | 0.137 m | 0.352 | 150.0 |
-| `xyz_polar_cov_joint` | 20.0% | 31.050 deg | 0.254 m | 0.324 | 41.5 |
-| `xyz_polar_staged` | 100.0% | 0.152 deg | 0.032 m | 0.252 | 135.0 |
+| `xyz_uv_joint` | 30.0% | 26.740 deg | 3.845 m | 0.155 | 20.0 |
+| `xyz_polar_cov_joint` | 25.0% | 49.263 deg | 9.052 m | 0.155 | 28.5 |
+| `xyz_polar_staged` | 100.0% | 0.219 deg | 0.113 m | 0.124 | 147.5 |
 
 Visualization:
 
 ![Experiment 4 local scene](outputs_exp4/exp4_local_scene_3d.png)
 
-`exp4_local_scene_3d.png` shows a short, weak-parallax BA window. Every landmark is visible in all five views, so the tracks are dense and long, but the overall baseline remains short.
+`exp4_local_scene_3d.png` now shows a more BA-like local window: the camera centers are visibly separated, each camera is rendered as a frustum, and two translucent amber boxes act as synthetic occluders. Landmark color encodes track length rather than depth, so the variable-length observation graph is visible directly in 3D.
 
 Key reading:
 
 - The first two views are fixed reference views, while the later three are optimized.
-- The short camera path makes pose recoverable but keeps free-`XYZ` structure relatively weakly constrained.
-- This is the regime where structure is most likely to absorb pose error if the optimizer starts from a bad basin.
+- Most local tracks now survive only `3` or `4` views instead of all `5`.
+- The short camera path still makes free-`XYZ` structure weaker than in the global regime.
+- This is the regime where pose-structure coupling is still strong enough that a bad initialization can send joint BA into a wrong basin.
 
 ![Experiment 4 local summary](outputs_exp4/exp4_local_summary.png)
 
@@ -664,13 +671,13 @@ Key reading:
 Key reading:
 
 - `xyz_polar_staged` converges in all tested trials, while the direct joint methods frequently fail under large yaw initialization error.
-- The staged-initialization panel shows that most of the gain happens before full BA: the staged rotation-only initialization reduces roughly `18-143` degree initial pose error to about `1.1-1.3` degrees.
-- Even after pose rescue, the final free-XYZ structure remains only moderately accurate, with median relative RMSE around `0.25`, because the short window simply does not provide enough geometry for tight structure recovery.
+- The staged-initialization panel shows that most of the gain still happens before full BA: the staged rotation-only initialization reduces roughly `18-142` degree initial pose error to about `0.50-0.63` degrees.
+- Even after pose rescue, the sparser observation graph makes final structure quality worse than the full-visibility version, with median relative RMSE around `0.124`.
 
 What it supports:
 
-- In local BA, the staged story is mainly about **preventing pose-structure coupling from sending joint BA into a bad basin**.
-- The main value of the staged method here is reliable pose rescue, not extremely accurate final structure.
+- In local BA, the staged story is still mainly about **preventing pose-structure coupling from sending joint BA into a bad basin**.
+- The method is not relying on a perfect full-track graph; it still works when tracks terminate early and a small fraction contain gaps.
 
 ### Global BA Regime
 
@@ -682,10 +689,13 @@ Configuration:
 | Fixed reference views | 2 |
 | Optimized later views | 6 |
 | Points | 160 |
-| Observations | 1276 |
-| Median track length | 8 |
-| Track length range | 6 to 8 |
-| Scene scale | 15.991 m |
+| Observations | 954 |
+| Median track length | 6 |
+| Track histogram | `{5: 54, 6: 67, 7: 30, 8: 9}` |
+| Gap histogram | `{0: 121, 1: 1, 2: 28, 3: 10}` |
+| Gapful points | `39 / 160` |
+| Path length | 9.792 m |
+| Scene scale | 40.951 m |
 | Yaw initialization errors | `0, 30, 60, 100, 140` deg |
 | Trials per level | 4 |
 | Output files | `exp4_global_*` |
@@ -694,21 +704,21 @@ Results:
 
 | Method | Convergence | Median pose error | Median translation error | Median structure rel. RMSE | Median function evals |
 |---|---:|---:|---:|---:|---:|
-| `xyz_uv_joint` | 30.0% | 2.733 deg | 0.671 m | 0.159 | 150.0 |
-| `xyz_polar_cov_joint` | 20.0% | 16.794 deg | 1.462 m | 0.720 | 44.5 |
-| `xyz_polar_staged` | 100.0% | 0.190 deg | 0.059 m | 0.089 | 136.0 |
+| `xyz_uv_joint` | 20.0% | 11.648 deg | 3.682 m | 0.095 | 150.0 |
+| `xyz_polar_cov_joint` | 5.0% | 54.996 deg | 11.149 m | 0.122 | 22.5 |
+| `xyz_polar_staged` | 100.0% | 0.260 deg | 0.233 m | 0.081 | 156.0 |
 
 Visualization:
 
 ![Experiment 4 global scene](outputs_exp4/exp4_global_scene_3d.png)
 
-`exp4_global_scene_3d.png` shows a longer camera path with many more optimized poses and much broader multi-view support per landmark.
+`exp4_global_scene_3d.png` shows a longer forward trajectory, purple optimized-view frustums, fixed gray reference frustums, and three translucent occluders that create structured observation loss. The point colors again encode track length, so the global regime's broader but still incomplete track support is visible directly.
 
 Key reading:
 
-- Compared with local BA, the path is longer and the tracks span more views.
+- Compared with local BA, the path is longer and the tracks still span more views, but most no longer survive the full `8`-view window.
 - The larger baseline creates stronger parallax and more geometric redundancy.
-- Once pose is in a good basin, this geometry gives BA much more leverage to refine free-`XYZ` structure and translation.
+- Once pose is in a good basin, this geometry still gives BA more leverage than the local regime to refine free-`XYZ` structure and translation.
 
 ![Experiment 4 global summary](outputs_exp4/exp4_global_summary.png)
 
@@ -717,27 +727,27 @@ Key reading:
 Key reading:
 
 - `xyz_polar_staged` again reaches 100% convergence under the tested large-initial-error regime.
-- The staged-initialization panel shows the same early rescue effect: the staged pose initialization reduces roughly `18-142` degree initial pose error to about `0.85-1.0` degrees before final BA.
-- Unlike local BA, the global regime then turns that good pose basin into much stronger structure recovery, driving median structure relative RMSE down to about `0.089`.
+- The staged-initialization panel shows the same early rescue effect under the sparser track graph: the staged pose initialization reduces roughly `18-142` degree initial pose error to about `0.48-0.54` degrees before final BA.
+- The direct joint methods become even less reliable than in the full-visibility version, but the staged method still reaches median structure relative RMSE around `0.081`.
 
 What it supports:
 
-- The staged initialization story is not limited to short local BA windows.
-- In a larger multi-view BA, the same pose rescue can unlock much stronger structure and translation refinement once enough geometry is present.
+- The staged initialization story is not limited to short local BA windows or unrealistically complete track graphs.
+- In a larger multi-view BA, the same pose rescue still unlocks better structure and translation refinement once enough geometry is present.
 
 ### Local vs Global Difference
 
 The most important difference is **not** whether staged initialization works. In this experiment, it works in both regimes.
 
-The real difference is what the geometry can do **after** the pose basin has been fixed:
+The real difference is what the geometry and track graph can do **after** the pose basin has been fixed:
 
-- In `local BA`, the main win is basin rescue. The short baseline does not let free-`XYZ` structure become very accurate even after the pose is corrected.
-- In `global BA`, the staged method still matters at initialization, but the larger path and longer tracks let the optimizer convert that pose win into a much larger structure win.
+- In `local BA`, the main win is still basin rescue. With track dropout and mild occlusion, the final structure stays noticeably noisier, at about `0.124` relative RMSE even after pose is corrected.
+- In `global BA`, the staged method still matters at initialization, but the larger path and broader support let the optimizer convert that pose win into a better structure result, around `0.081` relative RMSE.
 
 So the current evidence does **not** support the claim that the story is only a local-BA story. A more defensible reading is:
 
 - staged theta/phi initialization is a poor-initialization rescue mechanism for joint BA;
-- that rescue mechanism appears in both local and global synthetic BA;
+- that rescue mechanism appears in both local and global synthetic BA, even when the track graph is sparse and imperfect;
 - global BA benefits more strongly from extra view redundancy once pose has already been rescued.
 
 ## Current Claim
@@ -750,6 +760,7 @@ Supported:
 - staged theta/phi initialization still improves a more realistic multi-view local BA problem with noisy anchor observations and unknown translation components.
 - staged theta/phi initialization still improves a harder free-`XYZ` multi-track BA problem, where the story is better described as pose-structure coupling rather than only pose-depth coupling.
 - under severe synthetic initialization error, the staged story appears in both local and global BA regimes; the global regime mainly differs by converting the rescued pose basin into stronger structure recovery.
+- the same staged story survives after Experiment 4 is made more realistic with meter-scale camera spacing, frustum visualization, structured track dropout, and synthetic occluders.
 
 Not yet fully proven:
 
@@ -791,3 +802,6 @@ Suggested version labels:
 | `v0.3.1-ba-scene-figures` | Experiment 2/3 scene visualizations, figure interpretation, and synchronized outputs |
 | `v0.4.0-free-xyz-ba-regimes` | free-XYZ multi-track BA comparison between local and global regimes |
 | `v0.4.1-readme-sync` | README synchronization for Experiment 4 figures, results, and local/global BA interpretation |
+| `v0.4.2-exp4-scene-readability` | clearer Experiment 4 scene figures with de-cluttered camera markers and updated figure explanation |
+| `v0.4.3-exp4-frustum-scenes-and-rerun` | Experiment 4 scene redesign with larger baselines, frustum cameras, rerun results, and updated analysis |
+| `v0.4.4-exp4-track-dropout-occlusion` | Experiment 4 track-end dropout, structured occlusion, sparser track graphs, and synchronized README/results |

@@ -4,11 +4,12 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 from .ba_experiment import BAScene
 from .experiment import SyntheticScene
 from .free_xyz_ba_experiment import FreeXYZBAScene
-from .geometry import rpy_matrix
+from .geometry import equidistant_unproject, rpy_matrix
 from .realistic_ba_experiment import RealisticBAScene
 
 
@@ -142,6 +143,7 @@ def _plot_camera_frame(
     axis_length: float,
     label: str,
     marker_color: str,
+    show_label: bool = True,
 ) -> None:
     ax.scatter(
         [center[0]],
@@ -166,8 +168,9 @@ def _plot_camera_frame(
             linewidth=2.2 if idx == 2 else 1.5,
             arrow_length_ratio=0.12,
         )
-    text_offset = np.array([0.06, 0.06, 0.06]) * axis_length
-    ax.text(*(center + text_offset), label, fontsize=8, color=marker_color)
+    if show_label and label:
+        text_offset = np.array([0.06, 0.06, 0.06]) * axis_length
+        ax.text(*(center + text_offset), label, fontsize=8, color=marker_color)
 
 
 def _plot_anchor_rays(ax, points_world: np.ndarray, max_rays: int = 18) -> None:
@@ -184,6 +187,130 @@ def _plot_anchor_rays(ax, points_world: np.ndarray, max_rays: int = 18) -> None:
             alpha=0.35,
             label="anchor rays" if idx == 0 else None,
         )
+
+
+def _camera_frustum_geometry(
+    center: np.ndarray,
+    params: np.ndarray,
+    width: int,
+    height: int,
+    f: float,
+    depth: float,
+) -> np.ndarray:
+    corner_pixels = np.array(
+        [
+            [0.0, 0.0],
+            [float(width), 0.0],
+            [float(width), float(height)],
+            [0.0, float(height)],
+        ]
+    )
+    rays_cam = equidistant_unproject(corner_pixels, f, width * 0.5, height * 0.5)
+    rays_world = (rpy_matrix(params).T @ rays_cam.T).T
+    return center[None, :] + depth * rays_world
+
+
+def _plot_camera_frustum(
+    ax,
+    center: np.ndarray,
+    params: np.ndarray,
+    width: int,
+    height: int,
+    f: float,
+    depth: float,
+    edge_color: str,
+    face_color: str,
+    alpha: float,
+    label: str | None = None,
+) -> np.ndarray:
+    corners = _camera_frustum_geometry(center, params, width, height, f, depth)
+    plane = Poly3DCollection(
+        [[corners[0], corners[1], corners[2], corners[3]]],
+        facecolors=face_color,
+        edgecolors=edge_color,
+        linewidths=1.2,
+        alpha=alpha,
+        label=label,
+    )
+    ax.add_collection3d(plane)
+
+    side_faces = Poly3DCollection(
+        [[center, corners[i], corners[(i + 1) % 4]] for i in range(4)],
+        facecolors=face_color,
+        edgecolors=edge_color,
+        linewidths=0.8,
+        alpha=alpha * 0.35,
+    )
+    ax.add_collection3d(side_faces)
+
+    for corner in corners:
+        ax.plot(
+            [center[0], corner[0]],
+            [center[1], corner[1]],
+            [center[2], corner[2]],
+            color=edge_color,
+            linewidth=1.1,
+            alpha=min(alpha + 0.2, 0.95),
+        )
+    loop = np.vstack([corners, corners[0]])
+    ax.plot(
+        loop[:, 0],
+        loop[:, 1],
+        loop[:, 2],
+        color=edge_color,
+        linewidth=1.3,
+        alpha=min(alpha + 0.25, 0.95),
+    )
+
+    axes = _camera_axes_world(params)
+    optical_axis_end = center + axes[:, 2] * depth * 1.08
+    ax.plot(
+        [center[0], optical_axis_end[0]],
+        [center[1], optical_axis_end[1]],
+        [center[2], optical_axis_end[2]],
+        color=edge_color,
+        linewidth=1.7,
+        alpha=min(alpha + 0.3, 1.0),
+    )
+    return np.vstack([center, corners, optical_axis_end])
+
+
+def _box_vertices(box: np.ndarray) -> np.ndarray:
+    xmin, xmax, ymin, ymax, zmin, zmax = box
+    return np.array(
+        [
+            [xmin, ymin, zmin],
+            [xmax, ymin, zmin],
+            [xmax, ymax, zmin],
+            [xmin, ymax, zmin],
+            [xmin, ymin, zmax],
+            [xmax, ymin, zmax],
+            [xmax, ymax, zmax],
+            [xmin, ymax, zmax],
+        ]
+    )
+
+
+def _plot_box(ax, box: np.ndarray, edge_color: str, face_color: str, alpha: float, label: str | None = None) -> np.ndarray:
+    vertices = _box_vertices(box)
+    faces = [
+        [vertices[0], vertices[1], vertices[2], vertices[3]],
+        [vertices[4], vertices[5], vertices[6], vertices[7]],
+        [vertices[0], vertices[1], vertices[5], vertices[4]],
+        [vertices[1], vertices[2], vertices[6], vertices[5]],
+        [vertices[2], vertices[3], vertices[7], vertices[6]],
+        [vertices[3], vertices[0], vertices[4], vertices[7]],
+    ]
+    poly = Poly3DCollection(
+        faces,
+        facecolors=face_color,
+        edgecolors=edge_color,
+        linewidths=0.9,
+        alpha=alpha,
+        label=label,
+    )
+    ax.add_collection3d(poly)
+    return vertices
 
 
 def save_ba_scene_plot(scene: BAScene, path: Path) -> None:
@@ -835,15 +962,17 @@ def save_free_xyz_scene_plot(scene: FreeXYZBAScene, path: Path, title: str) -> N
     path.parent.mkdir(parents=True, exist_ok=True)
     fig = plt.figure(figsize=(8.8, 6.5))
     ax = fig.add_subplot(111, projection="3d")
+    ax.view_init(elev=20, azim=-56)
 
     scatter = ax.scatter(
         scene.points_world[:, 0],
         scene.points_world[:, 1],
         scene.points_world[:, 2],
         c=scene.track_lengths,
-        s=16,
+        s=12,
         cmap="viridis",
-        alpha=0.88,
+        alpha=0.42,
+        depthshade=False,
         label="landmarks",
     )
 
@@ -854,21 +983,92 @@ def save_free_xyz_scene_plot(scene: FreeXYZBAScene, path: Path, title: str) -> N
         path_points[:, 2],
         color="#666666",
         linestyle="--",
-        linewidth=1.5,
+        linewidth=1.8,
         label="camera path",
     )
 
-    for view, (center, params) in enumerate(zip(scene.true_centers_world, scene.true_params)):
-        marker_color = "#333333" if view < scene.fixed_view_count else "#9467BD"
-        label = f"view {view + 1}"
-        if view < scene.fixed_view_count:
-            label += " (fixed)"
-        else:
-            label += " (optimized)"
-        _plot_camera_frame(ax, center, params, axis_length=0.36, label=label, marker_color=marker_color)
+    fixed_centers = scene.true_centers_world[: scene.fixed_view_count]
+    fixed_params = scene.true_params[: scene.fixed_view_count]
+    opt_centers = scene.true_centers_world[scene.fixed_view_count :]
+    opt_params = scene.true_params[scene.fixed_view_count :]
+    path_length = float(np.linalg.norm(path_points[-1] - path_points[0])) if path_points.shape[0] > 1 else 1.0
+    frustum_depth = float(np.clip(0.50 * path_length, 1.35, 3.8))
+    frustum_points = []
+    occluder_vertices = []
 
-    all_points = np.vstack([scene.points_world, scene.true_centers_world])
-    _set_equal_3d(ax, all_points)
+    for idx, box in enumerate(scene.occluder_boxes_world):
+        occluder_vertices.append(
+            _plot_box(
+                ax,
+                box,
+                edge_color="#A6611A",
+                face_color="#E0B26D",
+                alpha=0.18,
+                label="occluders" if idx == 0 else None,
+            )
+        )
+
+    for idx, (center, params) in enumerate(zip(fixed_centers, fixed_params)):
+        frustum_points.append(
+            _plot_camera_frustum(
+                ax,
+                center,
+                params,
+                scene.camera.width,
+                scene.camera.height,
+                scene.camera.f,
+                frustum_depth,
+                edge_color="#222222",
+                face_color="#D9D9D9",
+                alpha=0.26,
+                label="fixed-view frustums" if idx == 0 else None,
+            )
+        )
+    for idx, (center, params) in enumerate(zip(opt_centers, opt_params)):
+        frustum_points.append(
+            _plot_camera_frustum(
+                ax,
+                center,
+                params,
+                scene.camera.width,
+                scene.camera.height,
+                scene.camera.f,
+                frustum_depth,
+                edge_color="#6A3D9A",
+                face_color="#B894D6",
+                alpha=0.24,
+                label="optimized-view frustums" if idx == 0 else None,
+            )
+        )
+
+    ax.scatter(
+        fixed_centers[:, 0],
+        fixed_centers[:, 1],
+        fixed_centers[:, 2],
+        s=18,
+        marker="o",
+        c="#222222",
+        depthshade=False,
+    )
+    ax.scatter(
+        opt_centers[:, 0],
+        opt_centers[:, 1],
+        opt_centers[:, 2],
+        s=18,
+        marker="o",
+        c="#6A3D9A",
+        depthshade=False,
+    )
+
+    if frustum_points:
+        point_low = np.percentile(scene.points_world, 1.5, axis=0)
+        point_high = np.percentile(scene.points_world, 98.5, axis=0)
+        all_points = np.vstack([point_low, point_high, scene.true_centers_world, np.vstack(frustum_points)])
+        if occluder_vertices:
+            all_points = np.vstack([all_points, np.vstack(occluder_vertices)])
+    else:
+        all_points = np.vstack([scene.points_world, scene.true_centers_world])
+    _set_equal_3d(ax, all_points, padding=0.16)
     ax.set_title(title)
     ax.set_xlabel("world x")
     ax.set_ylabel("world y")

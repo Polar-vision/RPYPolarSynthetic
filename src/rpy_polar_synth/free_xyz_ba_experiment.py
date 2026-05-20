@@ -25,6 +25,7 @@ class FreeXYZBAScenarioConfig:
     name: str
     true_rpy_deg: tuple[tuple[float, float, float], ...]
     centers_world: tuple[tuple[float, float, float], ...]
+    occluder_boxes_world: tuple[tuple[float, float, float, float, float, float], ...]
     n_points: int
     fixed_view_count: int
     min_track_length: int
@@ -41,6 +42,7 @@ class FreeXYZBAScene:
     points_world: np.ndarray
     visibility_mask: np.ndarray
     track_lengths: np.ndarray
+    gap_counts: np.ndarray
     scene_scale_m: float
     obs_view_indices: np.ndarray
     obs_point_indices: np.ndarray
@@ -52,6 +54,7 @@ class FreeXYZBAScene:
     phi_gates: np.ndarray
     true_params: np.ndarray
     true_centers_world: np.ndarray
+    occluder_boxes_world: np.ndarray
     fixed_view_count: int
     camera: CameraConfig
 
@@ -79,25 +82,29 @@ def default_local_free_xyz_scenario() -> FreeXYZBAScenarioConfig:
         name="local",
         true_rpy_deg=(
             (0.0, 0.0, 0.0),
-            (1.5, -1.0, 4.0),
-            (3.5, -2.0, 10.0),
-            (5.5, -3.0, 16.0),
-            (7.0, -4.0, 22.0),
+            (0.8, -0.7, 1.2),
+            (1.6, -1.0, 2.2),
+            (2.4, -1.2, 3.2),
+            (3.0, -1.0, 4.0),
         ),
         centers_world=(
             (0.0, 0.0, 0.0),
-            (0.18, -0.02, 0.03),
-            (0.39, -0.05, 0.06),
-            (0.63, -0.10, 0.10),
-            (0.90, -0.16, 0.14),
+            (0.85, -0.10, 0.04),
+            (1.80, -0.06, 0.10),
+            (2.80, 0.02, 0.18),
+            (3.85, 0.12, 0.24),
+        ),
+        occluder_boxes_world=(
+            (1.4, 2.8, -2.8, 0.8, 8.0, 15.0),
+            (-4.8, -2.2, 1.4, 4.8, 11.0, 18.0),
         ),
         n_points=120,
         fixed_view_count=2,
         min_track_length=3,
         min_track_span=2,
-        depth_min=5.0,
-        depth_max=20.0,
-        theta_target_max_deg=74.0,
+        depth_min=12.0,
+        depth_max=42.0,
+        theta_target_max_deg=70.0,
         seed=101,
     )
 
@@ -107,31 +114,36 @@ def default_global_free_xyz_scenario() -> FreeXYZBAScenarioConfig:
         name="global",
         true_rpy_deg=(
             (0.0, 0.0, 0.0),
-            (1.5, -1.0, 3.0),
-            (3.0, -2.0, 8.0),
-            (5.0, -3.0, 14.0),
-            (6.5, -2.5, 18.0),
-            (6.0, -0.5, 15.0),
-            (4.0, 1.5, 9.0),
-            (2.0, 2.5, 4.0),
+            (0.8, -0.6, 0.8),
+            (1.4, -1.0, 1.6),
+            (2.1, -1.4, 2.5),
+            (2.8, -1.0, 3.5),
+            (2.5, -0.2, 4.2),
+            (1.8, 0.5, 4.8),
+            (1.0, 0.9, 5.2),
         ),
         centers_world=(
             (0.0, 0.0, 0.0),
-            (0.35, -0.04, 0.03),
-            (0.82, -0.12, 0.07),
-            (1.35, -0.22, 0.12),
-            (1.88, -0.18, 0.18),
-            (2.30, -0.02, 0.24),
-            (2.46, 0.28, 0.30),
-            (2.26, 0.62, 0.34),
+            (1.20, -0.12, 0.05),
+            (2.60, -0.24, 0.12),
+            (4.10, -0.20, 0.20),
+            (5.80, -0.02, 0.32),
+            (7.40, 0.28, 0.48),
+            (8.70, 0.66, 0.62),
+            (9.70, 1.10, 0.76),
+        ),
+        occluder_boxes_world=(
+            (2.0, 4.2, -3.6, 1.0, 10.0, 18.0),
+            (5.7, 7.9, 1.6, 5.8, 15.0, 24.0),
+            (-8.5, -4.2, -6.5, -1.5, 13.5, 24.0),
         ),
         n_points=160,
         fixed_view_count=2,
         min_track_length=5,
         min_track_span=4,
-        depth_min=6.0,
-        depth_max=24.0,
-        theta_target_max_deg=76.0,
+        depth_min=18.0,
+        depth_max=58.0,
+        theta_target_max_deg=72.0,
         seed=131,
     )
 
@@ -174,6 +186,81 @@ def _sample_candidate_point(
     return polar_to_bearing(np.array(theta), np.array(phi)) * depth
 
 
+def _segment_intersects_aabb(
+    origin: np.ndarray,
+    target: np.ndarray,
+    box: np.ndarray,
+) -> bool:
+    direction = target - origin
+    t_min = 0.0
+    t_max = 1.0
+    for axis in range(3):
+        lower = float(box[2 * axis])
+        upper = float(box[2 * axis + 1])
+        delta = float(direction[axis])
+        if abs(delta) < 1e-12:
+            coord = float(origin[axis])
+            if coord < lower or coord > upper:
+                return False
+            continue
+        inv_delta = 1.0 / delta
+        t1 = (lower - float(origin[axis])) * inv_delta
+        t2 = (upper - float(origin[axis])) * inv_delta
+        lo = min(t1, t2)
+        hi = max(t1, t2)
+        t_min = max(t_min, lo)
+        t_max = min(t_max, hi)
+        if t_min > t_max:
+            return False
+    return t_max > max(t_min, 1e-6) and t_min < 1.0 - 1e-6
+
+
+def _apply_track_dropout_and_occlusion(
+    point_world: np.ndarray,
+    geometric_visible: np.ndarray,
+    scenario: FreeXYZBAScenarioConfig,
+    true_params: np.ndarray,
+    true_centers_world: np.ndarray,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    visible = geometric_visible.copy()
+    n_views = visible.size
+    max_end_view = int(np.flatnonzero(visible)[-1])
+    min_end_view = max(scenario.min_track_span, scenario.fixed_view_count)
+
+    q0 = rpy_matrix(true_params[0]) @ (point_world - true_centers_world[0])
+    theta0 = np.arctan2(np.linalg.norm(q0[:2]), q0[2])
+    theta_norm = np.clip(theta0 / np.deg2rad(scenario.theta_target_max_deg), 0.0, 1.0)
+    depth_norm = np.clip(
+        (q0[2] - scenario.depth_min) / max(scenario.depth_max - scenario.depth_min, 1e-12),
+        0.0,
+        1.0,
+    )
+
+    retention = np.clip(
+        0.20 + 0.55 * depth_norm + 0.25 * (1.0 - theta_norm) + 0.10 * rng.normal(),
+        0.0,
+        1.0,
+    )
+    alpha = 1.0 + 3.0 * retention
+    beta = 1.2 + 3.5 * (1.0 - retention)
+    end_fraction = rng.beta(alpha, beta)
+    end_view = min_end_view + int(
+        np.floor(end_fraction * (max_end_view - min_end_view + 1 - 1e-9))
+    )
+    visible[end_view + 1 :] = False
+
+    occluder_boxes = np.array(scenario.occluder_boxes_world, dtype=float).reshape(-1, 6)
+    for view in range(scenario.fixed_view_count, end_view + 1):
+        if not visible[view]:
+            continue
+        for box in occluder_boxes:
+            if _segment_intersects_aabb(true_centers_world[view], point_world, box):
+                visible[view] = False
+                break
+    return visible
+
+
 def make_free_xyz_scene(
     scenario: FreeXYZBAScenarioConfig,
     camera: CameraConfig = CameraConfig(),
@@ -188,9 +275,10 @@ def make_free_xyz_scene(
     visibility_masks: list[np.ndarray] = []
     clean_pixels_by_view: list[list[np.ndarray]] = [[] for _ in range(n_views)]
     visible_points_by_view: list[list[int]] = [[] for _ in range(n_views)]
+    occluder_boxes_world = np.array(scenario.occluder_boxes_world, dtype=float).reshape(-1, 6)
 
     attempts = 0
-    max_attempts = scenario.n_points * 600
+    max_attempts = scenario.n_points * 2200
     while len(points_world) < scenario.n_points and attempts < max_attempts:
         attempts += 1
         central = len(points_world) < max(12, scenario.n_points // 5)
@@ -210,11 +298,20 @@ def make_free_xyz_scene(
             pixels.append(pixel)
 
         visible_views = np.flatnonzero(visible)
+        if not np.all(visible[: scenario.fixed_view_count]):
+            continue
+        visible = _apply_track_dropout_and_occlusion(
+            candidate,
+            visible,
+            scenario,
+            true_params,
+            true_centers_world,
+            rng,
+        )
+        visible_views = np.flatnonzero(visible)
         if visible_views.size < scenario.min_track_length:
             continue
         if int(visible_views[-1] - visible_views[0]) < scenario.min_track_span:
-            continue
-        if not np.all(visible[: scenario.fixed_view_count]):
             continue
 
         point_index = len(points_world)
@@ -230,6 +327,13 @@ def make_free_xyz_scene(
     points_world_array = np.array(points_world)
     visibility_mask = np.array(visibility_masks)
     track_lengths = visibility_mask.sum(axis=1)
+    gap_counts = np.zeros(points_world_array.shape[0], dtype=int)
+    for point_idx, mask in enumerate(visibility_mask):
+        visible_views = np.flatnonzero(mask)
+        if visible_views.size == 0:
+            continue
+        span = mask[visible_views[0] : visible_views[-1] + 1]
+        gap_counts[point_idx] = int(np.count_nonzero(~span))
 
     obs_view_indices: list[int] = []
     obs_point_indices: list[int] = []
@@ -275,6 +379,7 @@ def make_free_xyz_scene(
         points_world=points_world_array,
         visibility_mask=visibility_mask,
         track_lengths=track_lengths,
+        gap_counts=gap_counts,
         scene_scale_m=scene_scale_m,
         obs_view_indices=obs_view_indices_array,
         obs_point_indices=obs_point_indices_array,
@@ -286,6 +391,7 @@ def make_free_xyz_scene(
         phi_gates=phi_gates,
         true_params=true_params,
         true_centers_world=true_centers_world,
+        occluder_boxes_world=occluder_boxes_world,
         fixed_view_count=scenario.fixed_view_count,
         camera=camera,
     )
