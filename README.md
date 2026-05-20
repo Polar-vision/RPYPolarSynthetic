@@ -8,12 +8,13 @@ The project tests whether a camera observation can be decomposed into:
 - an angular part `phi`, useful for heading / in-plane optical-axis yaw;
 - a covariance-aware residual that respects pixel-noise propagation and the optical-axis singularity.
 
-The current repository contains four experiment layers:
+The current repository contains five experiment layers:
 
 1. `run_experiment.py`: a clean single-view sanity check.
 2. `run_ba_experiment.py`: a harder two-view inverse-depth BA stress test.
 3. `run_exp3_experiment.py`: a more realistic three-view local BA stress test with unknown translations and weak baseline-length priors.
 4. `run_exp4_experiment.py`: a free-`XYZ` multi-track BA comparison between local and global regimes.
+5. `run_exp5_experiment.py`: a UAV-style oblique multi-strip free-`XYZ` BA stress test.
 
 ## Project-Specific RPY Convention
 
@@ -44,6 +45,185 @@ Thus `theta` is decoupled from optical-axis yaw, while `phi` shifts linearly wit
 
 This naming is intentional. If `yaw` is instead defined as a world-frame heading around gravity, the exact `theta`/`phi` decoupling used by this experiment generally does not hold.
 
+## Why Polar, Why Staged
+
+This repository is really a method-evolution story rather than a single optimizer proposal:
+
+1. start from the standard `uv_joint` reprojection baseline;
+2. expose the geometry with `polar_plain_joint`;
+3. repair that polar residual statistically to obtain `polar_cov_joint`;
+4. then stratify the search to obtain `polar_staged`.
+
+The central claim is therefore not just "polar is better than uv". The stronger claim is:
+
+- polar coordinates reveal a useful split between `theta` and `phi`;
+- covariance propagation is needed to make that split statistically sound;
+- staged optimization is needed when a direct joint solve still falls into a bad basin under strong coupling.
+
+### Core Geometric Idea
+
+After the roll-pitch tilt layer, the repository uses:
+
+```text
+theta = atan2(sqrt(x^2 + y^2), z)
+phi   = atan2(y, x) + yaw
+```
+
+So, under this project's convention:
+
+- `theta` is the bearing angle away from the optical axis and is mainly informative for `roll/pitch`;
+- `phi` is the in-plane azimuth and is shifted almost linearly by the final optical-axis `yaw`.
+
+That exact decoupling is the geometric reason a staged solver is plausible at all.
+
+### Why Not Stop At `uv_joint`?
+
+`uv_joint` is the natural baseline:
+
+- it works directly in image coordinates;
+- it uses the standard reprojection residual;
+- it is generic and familiar.
+
+But it hides the specific geometry this repository wants to exploit. In `uv`, the radial part and the azimuthal part are mixed together, so the optimizer is not told explicitly that:
+
+- one part of the observation is mainly about tilt;
+- another part is mainly about optical-axis yaw.
+
+That motivates trying a polar observation model.
+
+### Why `polar_plain_joint` Was Not Enough
+
+`polar_plain_joint` is the first geometric rewrite:
+
+- convert image observations into `[theta, phi]`;
+- optimize directly in that space;
+- test whether the decoupling has real value.
+
+Its role is important, but it is intentionally incomplete. Raw polar residuals are geometrically meaningful and still statistically naive:
+
+- equal weighting in `[theta, phi]` does not match the covariance induced by pixel noise;
+- `phi` is angular and must be wrapped;
+- near the optical axis, `phi` becomes physically ill-conditioned and should not be trusted as much as off-axis `phi`.
+
+So `polar_plain_joint` is best understood as a bridge method: it isolates the geometry, then reveals what is still wrong.
+
+### How `polar_cov_joint` Is Constructed
+
+`polar_cov_joint` is the statistically repaired version of raw polar optimization.
+
+Its implementation story is:
+
+1. start from noisy image pixels;
+2. unproject them into bearing directions;
+3. convert the bearing into `[theta, phi]`;
+4. propagate isotropic pixel covariance into a local polar covariance;
+5. wrap `dphi` into `[-pi, pi)`;
+6. whiten `[dtheta, dphi]` using the propagated covariance;
+7. down-weight the `phi` component near the optical axis.
+
+So `polar_cov_joint` is not "polar plus some ad hoc weights". It is a specific answer to the question:
+
+```text
+If the geometry really wants a polar residual,
+how do we make that residual statistically honest?
+```
+
+### Four Methods At A Glance
+
+| Method | Residual space | Covariance-aware | Wrap `phi` | Gate near optical axis | Search strategy | Main limitation |
+|---|---|---:|---:|---:|---|---|
+| `uv_joint` | image-plane `uv` | pixel sigma only | no | no | direct joint solve | hides `theta/phi` geometry |
+| `polar_plain_joint` | raw `[theta, phi]` | no | no | no | direct joint solve | geometrically meaningful but statistically weak |
+| `polar_cov_joint` | whitened polar residual | yes | yes | yes | direct joint solve | still vulnerable to bad basins under strong coupling |
+| `polar_staged` | same cov-aware polar residual family | yes | yes | yes | staged init, then final joint solve | more complex schedule and more optimizer steps |
+
+### Why `polar_cov_joint` Still Was Not The End
+
+Even after the residual becomes covariance-aware, the hard BA problems in this repository still have another failure mode:
+
+- the state is coupled;
+- initialization can be very poor;
+- a direct joint solve may let the wrong variables absorb the orientation error;
+- once the optimizer enters the wrong basin, a good residual alone may not rescue it.
+
+That is why `polar_staged` is not just another residual choice. It is a search-strategy change.
+
+### How `polar_staged` Works
+
+The generic staged pattern is:
+
+```text
+Stage B: theta-only update
+  optimize tilt variables only
+  keep yaw and coupling variables fixed
+
+Stage C: phi-only update
+  optimize yaw only
+  keep updated tilt and coupling variables fixed
+
+Stage D: final covariance-aware joint BA
+  release the full state needed by that experiment
+  jointly refine everything in the good basin
+```
+
+The key design principle is:
+
+- during staged rotation initialization, do not let the hardest coupled variables absorb orientation error;
+- only after a reasonable pose basin has been found, hand the problem back to the full joint optimizer.
+
+### What Exactly Is Optimized In Each Stage?
+
+For the simplest pose-only experiment:
+
+- `theta-only` updates `roll/pitch` while keeping `yaw` fixed;
+- `phi-only` updates `yaw` while keeping the updated `roll/pitch` fixed;
+- final joint optimization releases all `3` pose variables.
+
+For the BA experiments, the staged logic is the same but the frozen variables depend on the state parameterization:
+
+| Experiment family | `theta-only` stage | `phi-only` stage | Final joint stage |
+|---|---|---|---|
+| Experiment 1 pose-only | optimize `roll/pitch`, fix `yaw` | optimize `yaw`, fix updated `roll/pitch` | release all pose variables |
+| Experiment 2 inverse-depth BA | optimize pose rotation only, fix inverse depths | optimize yaw only, fix updated tilt and inverse depths | release pose + inverse depths |
+| Experiment 3 realistic local BA | optimize target-view `roll/pitch`, fix target-view yaw, translations, inverse depths | optimize target-view yaw, fix updated tilt, translations, inverse depths | release pose + translations + inverse depths |
+| Experiment 4 free-`XYZ` BA | optimize later-view `roll/pitch`, fix later-view yaw, centers, point `XYZ` | optimize later-view yaw, fix updated tilt, centers, point `XYZ` | release rotations + centers + point `XYZ` |
+| Experiment 5 airborne block | same as Exp4, but with one extra `theta-only -> phi-only` alternation before the final stage | same as Exp4 | release rotations + centers + point `XYZ` |
+
+The reason for freezing those BA variables is deliberate:
+
+- if depth, translation, or `XYZ` are free too early, they can absorb pose error;
+- that destroys the geometric separation that staged initialization is trying to exploit.
+
+### How Does `polar_staged` Enter The Final Joint BA?
+
+`polar_staged` is not a separate terminal solver. It is a basin-finding front-end for the final covariance-aware joint solve.
+
+The handoff is:
+
+1. run restricted `theta-only` optimization;
+2. run restricted `phi-only` optimization;
+3. pack the updated pose variables back into a full experiment state;
+4. use that state as the initialization for the full covariance-aware joint optimization.
+
+So the final optimizer is not starting from the raw Monte-Carlo perturbation. It is starting from a pose that has already been partially untangled.
+
+### Why Exp5 Uses Two Alternations
+
+Experiments 1-4 use one `theta-only -> phi-only` pass.
+
+Experiment 5 uses:
+
+```text
+theta-only -> phi-only -> theta-only -> phi-only -> final joint BA
+```
+
+The intended interpretation is modest:
+
+- Exp5 is a larger and more strongly coupled airborne multi-strip block;
+- one extra bounded alternation gives tilt and optical-axis yaw one more chance to re-align before the full free-`XYZ` BA is released.
+
+This repository does **not** claim that more and more staged cycles must monotonically improve the result. In the current method story, repeated staging should be read as a limited block-coordinate initializer, not as an indefinitely repeated outer loop that replaces final joint BA.
+
 ## Project Layout
 
 ```text
@@ -52,7 +232,9 @@ RPYPolarSynthetic/
   run_ba_experiment.py
   run_exp3_experiment.py
   run_exp4_experiment.py
+  run_exp5_experiment.py
   src/rpy_polar_synth/
+    airborne_strip_experiment.py
     geometry.py
     experiment.py
     ba_experiment.py
@@ -85,6 +267,11 @@ RPYPolarSynthetic/
     exp4_global_results.csv
     exp4_global_scene_3d.png
     exp4_global_summary.png
+  outputs_exp5/
+    exp5_uav_oblique_results.csv
+    exp5_uav_oblique_scene_3d.png
+    exp5_uav_oblique_plan_view.png
+    exp5_uav_oblique_summary.png
 ```
 
 ## Environment
@@ -909,3 +1096,4 @@ Suggested version labels:
 | `v0.4.4-exp4-track-dropout-occlusion` | Experiment 4 track-end dropout, structured occlusion, sparser track graphs, and synchronized README/results |
 | `v0.5.0-exp5-uav-oblique-strips` | Experiment 5 UAV-style oblique multi-strip free-XYZ BA with new scene figures, plan-view layout, outputs, and analysis |
 | `v0.5.1-readme-sync` | README synchronization for Experiment 5, updated reproducibility instructions, and repository version bookkeeping |
+| `v0.5.2-why-polar-why-staged` | text-only README method-introduction chapter explaining the evolution from `uv_joint` to `polar_staged` and the staged BA logic |
