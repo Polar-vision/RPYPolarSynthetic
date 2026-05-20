@@ -750,6 +750,105 @@ So the current evidence does **not** support the claim that the story is only a 
 - that rescue mechanism appears in both local and global synthetic BA, even when the track graph is sparse and imperfect;
 - global BA benefits more strongly from extra view redundancy once pose has already been rescued.
 
+## Experiment 5: UAV-Style Oblique Multi-Strip Free-XYZ BA
+
+Run:
+
+```powershell
+python run_exp5_experiment.py
+```
+
+Motivation:
+
+Experiment 4 already made the free-`XYZ` BA story much more realistic, but it still used a single forward path. Experiment 5 asks a more aerial-photogrammetry-like question: if the cameras fly several oblique strips with stronger strip-to-strip pose diversity, track gaps, and structured occlusion, does the staged `theta/phi` story still hold?
+
+Design:
+
+- `3` strips: west / center / east;
+- `12` total views, with `2` fixed center-strip anchors and `10` optimized views;
+- `180` free-`XYZ` landmarks arranged in several spatial clusters;
+- explicit occluder boxes that remove some later observations;
+- track dropout and interior gaps, so the block is not full-visibility;
+- inward-looking oblique viewing directions instead of a single nearly forward path.
+
+Important geometry note:
+
+To keep the true poses physically reasonable under this project's `R = Rz(yaw) Ry(pitch) Rx(roll)` convention, the internal Exp5 world uses positive `z` as "downward depth" and the 3D scene figure inverts the `z` axis for visualization. This avoids artificial near-`180 deg` roll/pitch ground-truth poses while still drawing the scene like an airborne block.
+
+The staged solver in this experiment also uses `2` alternating `theta-only / phi-only` cycles before the final covariance-aware joint BA, and its final refinement is run dense rather than with the Exp4 sparse finite-difference pattern. The method is still the same staged story; these details simply make the larger strip-block numerically stable enough to test that story fairly.
+
+Configuration:
+
+| Setting | Value |
+|---|---:|
+| Strips | 3 |
+| Views | 12 |
+| Fixed reference views | 2 |
+| Optimized later views | 10 |
+| Points | 180 |
+| Observations | 1200 |
+| Scene scale | 27.652 m |
+| Track histogram | `{4: 8, 5: 31, 6: 51, 7: 36, 8: 35, 9: 15, 10: 4}` |
+| Gap histogram | `{0: 35, 1: 52, 2: 60, 3: 29, 4: 4}` |
+| Gapful points | `145 / 180` |
+| True roll range | `-40.7 deg` to `41.3 deg` |
+| True pitch range | `-13.3 deg` to `13.4 deg` |
+| True yaw range | `-10.5 deg` to `18.7 deg` |
+| Yaw initialization errors | `0, 30, 60, 100, 140` deg |
+| Tilt initialization error | `22 deg` |
+| Translation initialization error | `0.70 m` |
+| Trials per level | 3 |
+| Output files | `exp5_uav_oblique_*` |
+
+Results:
+
+| Method | Convergence | Median pose error | Median translation error | Median structure rel. RMSE | Median function evals |
+|---|---:|---:|---:|---:|---:|
+| `xyz_uv_joint` | `0.0%` | `68.381 deg` | `10.804 m` | `0.0047` | `23.0` |
+| `xyz_polar_cov_joint` | `0.0%` | `78.706 deg` | `28.774 m` | `0.0047` | `24.0` |
+| `xyz_polar_staged` | `100.0%` | `0.554 deg` | `0.306 m` | `0.0020` | `101.0` |
+
+Visualization:
+
+![Experiment 5 scene](outputs_exp5/exp5_uav_oblique_scene_3d.png)
+
+`exp5_uav_oblique_scene_3d.png` shows the airborne block in 3D: three strips, fixed black center-strip anchors, optimized oblique frustums, several landmark clusters, and translucent amber occluders. Landmark color encodes track length, so the sparse and gapful observation graph is visible directly.
+
+Key reading:
+
+- This looks much closer to an actual oblique UAV acquisition than Exp4's single path.
+- The center strip provides the two fixed anchor views used to triangulate the initial landmarks.
+- The west and east strips look inward across the block, so the scene contains stronger strip-to-strip orientation diversity than the earlier free-`XYZ` experiments.
+- Most tracks are incomplete, and many contain interior gaps, so the staged story is no longer being tested on a cosmetically dense graph.
+
+![Experiment 5 plan view](outputs_exp5/exp5_uav_oblique_plan_view.png)
+
+`exp5_uav_oblique_plan_view.png` makes the strip layout easier to read from above. The projected optical-axis arrows show that the three strips are not just translated copies of one another; they create an inward-looking oblique block.
+
+![Experiment 5 summary](outputs_exp5/exp5_uav_oblique_summary.png)
+
+`exp5_uav_oblique_summary.png` should again be read as a basin-rescue figure.
+
+Key reading:
+
+- Both direct joint methods stay at `0%` convergence under the tested initialization errors.
+- `xyz_polar_staged` reaches `100%` convergence across all tested yaw-error levels.
+- The staged-initialization panel shows the same mechanism as before: the median initial pose error is roughly `22-146 deg`, staged initialization reduces it to about `1.3-1.8 deg`, and the final joint BA then refines it further to about `0.55 deg`.
+- The structure panel shows that even though all methods can keep a small relative `XYZ` RMSE under the fixed-anchor setup, only the staged method simultaneously recovers the pose basin.
+- The translation panel shows the same separation as the pose panel: once the pose basin is rescued, the final BA can also keep the optimized camera centers close to the truth.
+
+What it supports:
+
+- The main story still holds in a more realistic oblique multi-strip airborne block.
+- The benefit still comes from staged initialization, not merely from switching UV residuals to covariance-aware polar residuals.
+- The story is now supported in a setting with multiple tracks, free pose plus free structure, structured occlusion, and strong track incompleteness.
+
+What it does not prove:
+
+- It still does not replace real aerial BA datasets.
+- The first two views remain fixed, so the experiment is not a full free-gauge global reconstruction.
+- The visibility, dropout, and occlusion patterns are still synthetic even if they are more realistic than earlier experiments.
+
 ## Current Claim
 
 Supported:
@@ -761,6 +860,7 @@ Supported:
 - staged theta/phi initialization still improves a harder free-`XYZ` multi-track BA problem, where the story is better described as pose-structure coupling rather than only pose-depth coupling.
 - under severe synthetic initialization error, the staged story appears in both local and global BA regimes; the global regime mainly differs by converting the rescued pose basin into stronger structure recovery.
 - the same staged story survives after Experiment 4 is made more realistic with meter-scale camera spacing, frustum visualization, structured track dropout, and synthetic occluders.
+- the same staged story also survives a more aerial-photogrammetry-like oblique multi-strip free-`XYZ` BA block with strong track incompleteness, inward-looking strip geometry, and larger pose diversity.
 
 Not yet fully proven:
 
@@ -768,6 +868,7 @@ Not yet fully proven:
 - robustness when translation direction, scale, bias, or extrinsics are all simultaneously unknown without auxiliary priors;
 - general advantage across camera models and motion patterns.
 - necessity of the same staged machinery in a well-initialized, full-map global BA with strong external initialization or loop-closure support.
+- robustness on real airborne oblique blocks where visibility, gross outliers, and calibration errors come from a full matching and reconstruction pipeline rather than a synthetic generator.
 
 ## Reproduce
 
@@ -777,7 +878,8 @@ python run_experiment.py
 python run_ba_experiment.py
 python run_exp3_experiment.py
 python run_exp4_experiment.py
-python -m compileall src run_experiment.py run_ba_experiment.py run_exp3_experiment.py run_exp4_experiment.py
+python run_exp5_experiment.py
+python -m compileall src run_experiment.py run_ba_experiment.py run_exp3_experiment.py run_exp4_experiment.py run_exp5_experiment.py
 ```
 
 ## Versioning
@@ -805,3 +907,5 @@ Suggested version labels:
 | `v0.4.2-exp4-scene-readability` | clearer Experiment 4 scene figures with de-cluttered camera markers and updated figure explanation |
 | `v0.4.3-exp4-frustum-scenes-and-rerun` | Experiment 4 scene redesign with larger baselines, frustum cameras, rerun results, and updated analysis |
 | `v0.4.4-exp4-track-dropout-occlusion` | Experiment 4 track-end dropout, structured occlusion, sparser track graphs, and synchronized README/results |
+| `v0.5.0-exp5-uav-oblique-strips` | Experiment 5 UAV-style oblique multi-strip free-XYZ BA with new scene figures, plan-view layout, outputs, and analysis |
+| `v0.5.1-readme-sync` | README synchronization for Experiment 5, updated reproducibility instructions, and repository version bookkeeping |
