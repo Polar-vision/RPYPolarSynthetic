@@ -8,11 +8,12 @@ The project tests whether a camera observation can be decomposed into:
 - an angular part `phi`, useful for heading / in-plane optical-axis yaw;
 - a covariance-aware residual that respects pixel-noise propagation and the optical-axis singularity.
 
-The current repository contains three experiment layers:
+The current repository contains four experiment layers:
 
 1. `run_experiment.py`: a clean single-view sanity check.
 2. `run_ba_experiment.py`: a harder two-view inverse-depth BA stress test.
 3. `run_exp3_experiment.py`: a more realistic three-view local BA stress test with unknown translations and weak baseline-length priors.
+4. `run_exp4_experiment.py`: a free-`XYZ` multi-track BA comparison between local and global regimes.
 
 ## Project-Specific RPY Convention
 
@@ -50,11 +51,13 @@ RPYPolarSynthetic/
   run_experiment.py
   run_ba_experiment.py
   run_exp3_experiment.py
+  run_exp4_experiment.py
   src/rpy_polar_synth/
     geometry.py
     experiment.py
     ba_experiment.py
     realistic_ba_experiment.py
+    free_xyz_ba_experiment.py
     visualize.py
   outputs/
     monte_carlo_results.csv
@@ -75,6 +78,13 @@ RPYPolarSynthetic/
     exp3_monte_carlo_results.csv
     exp3_scene_3d.png
     exp3_monte_carlo_summary.png
+  outputs_exp4/
+    exp4_local_results.csv
+    exp4_local_scene_3d.png
+    exp4_local_summary.png
+    exp4_global_results.csv
+    exp4_global_scene_3d.png
+    exp4_global_summary.png
 ```
 
 ## Environment
@@ -565,6 +575,171 @@ What it does not support:
 - It does not prove that translation is solved. Experiment 3 only uses weak baseline-length priors, and translation direction remains much less observable than rotation.
 - It still does not prove real-data superiority or full monocular free-scale SLAM robustness.
 
+## Experiment 4: Free-XYZ Multi-Track BA in Local and Global Regimes
+
+Run:
+
+```powershell
+python run_exp4_experiment.py
+```
+
+Motivation:
+
+Experiment 2 and 3 already show that staged theta/phi initialization can rescue difficult inverse-depth BA problems. But both still rely on anchor-based depth parameterizations. Experiment 4 asks a harder question: does the story survive when landmarks are optimized as free `XYZ` variables and many tracks are jointly refined with camera pose?
+
+This experiment therefore shifts the story from a narrower **pose-depth coupling** claim to a broader **pose-structure coupling** claim.
+
+Design:
+
+- the first two views are fixed to remove monocular gauge freedom;
+- all later camera poses and all 3D landmarks are optimized jointly;
+- landmarks are free `XYZ` variables in world coordinates;
+- initial landmarks are triangulated only from the first two fixed reference views;
+- two geometric regimes are compared: a short-window `local BA` regime and a longer-path `global BA` regime.
+
+Optimized state:
+
+```text
+x = [optimized pose rotations, optimized pose centers, point_1_xyz, ..., point_N_xyz]
+```
+
+Methods:
+
+| Method | Description |
+|---|---|
+| `xyz_uv_joint` | direct free-XYZ joint BA in UV residual space |
+| `xyz_polar_cov_joint` | direct free-XYZ joint BA with covariance-aware polar residuals |
+| `xyz_polar_staged` | theta-only roll/pitch initialization, phi-only yaw initialization, then final covariance-aware joint BA |
+
+Success criterion:
+
+```text
+max rotation error across optimized poses < 3 deg
+and structure relative RMSE < 30%
+```
+
+The structure threshold is deliberately looser than in the inverse-depth experiments, because a short-window free-XYZ BA problem is much less directly constrained than an anchored inverse-depth one.
+
+### Local BA Regime
+
+Configuration:
+
+| Setting | Value |
+|---|---:|
+| Views | 5 |
+| Fixed reference views | 2 |
+| Optimized later views | 3 |
+| Points | 120 |
+| Observations | 600 |
+| Median track length | 5 |
+| Scene scale | 11.691 m |
+| Yaw initialization errors | `0, 30, 60, 100, 140` deg |
+| Trials per level | 4 |
+| Output files | `exp4_local_*` |
+
+Results:
+
+| Method | Convergence | Median pose error | Median translation error | Median structure rel. RMSE | Median function evals |
+|---|---:|---:|---:|---:|---:|
+| `xyz_uv_joint` | 35.0% | 1.085 deg | 0.137 m | 0.352 | 150.0 |
+| `xyz_polar_cov_joint` | 20.0% | 31.050 deg | 0.254 m | 0.324 | 41.5 |
+| `xyz_polar_staged` | 100.0% | 0.152 deg | 0.032 m | 0.252 | 135.0 |
+
+Visualization:
+
+![Experiment 4 local scene](outputs_exp4/exp4_local_scene_3d.png)
+
+`exp4_local_scene_3d.png` shows a short, weak-parallax BA window. Every landmark is visible in all five views, so the tracks are dense and long, but the overall baseline remains short.
+
+Key reading:
+
+- The first two views are fixed reference views, while the later three are optimized.
+- The short camera path makes pose recoverable but keeps free-`XYZ` structure relatively weakly constrained.
+- This is the regime where structure is most likely to absorb pose error if the optimizer starts from a bad basin.
+
+![Experiment 4 local summary](outputs_exp4/exp4_local_summary.png)
+
+`exp4_local_summary.png` is best read as a basin-rescue figure.
+
+Key reading:
+
+- `xyz_polar_staged` converges in all tested trials, while the direct joint methods frequently fail under large yaw initialization error.
+- The staged-initialization panel shows that most of the gain happens before full BA: the staged rotation-only initialization reduces roughly `18-143` degree initial pose error to about `1.1-1.3` degrees.
+- Even after pose rescue, the final free-XYZ structure remains only moderately accurate, with median relative RMSE around `0.25`, because the short window simply does not provide enough geometry for tight structure recovery.
+
+What it supports:
+
+- In local BA, the staged story is mainly about **preventing pose-structure coupling from sending joint BA into a bad basin**.
+- The main value of the staged method here is reliable pose rescue, not extremely accurate final structure.
+
+### Global BA Regime
+
+Configuration:
+
+| Setting | Value |
+|---|---:|
+| Views | 8 |
+| Fixed reference views | 2 |
+| Optimized later views | 6 |
+| Points | 160 |
+| Observations | 1276 |
+| Median track length | 8 |
+| Track length range | 6 to 8 |
+| Scene scale | 15.991 m |
+| Yaw initialization errors | `0, 30, 60, 100, 140` deg |
+| Trials per level | 4 |
+| Output files | `exp4_global_*` |
+
+Results:
+
+| Method | Convergence | Median pose error | Median translation error | Median structure rel. RMSE | Median function evals |
+|---|---:|---:|---:|---:|---:|
+| `xyz_uv_joint` | 30.0% | 2.733 deg | 0.671 m | 0.159 | 150.0 |
+| `xyz_polar_cov_joint` | 20.0% | 16.794 deg | 1.462 m | 0.720 | 44.5 |
+| `xyz_polar_staged` | 100.0% | 0.190 deg | 0.059 m | 0.089 | 136.0 |
+
+Visualization:
+
+![Experiment 4 global scene](outputs_exp4/exp4_global_scene_3d.png)
+
+`exp4_global_scene_3d.png` shows a longer camera path with many more optimized poses and much broader multi-view support per landmark.
+
+Key reading:
+
+- Compared with local BA, the path is longer and the tracks span more views.
+- The larger baseline creates stronger parallax and more geometric redundancy.
+- Once pose is in a good basin, this geometry gives BA much more leverage to refine free-`XYZ` structure and translation.
+
+![Experiment 4 global summary](outputs_exp4/exp4_global_summary.png)
+
+`exp4_global_summary.png` should be read as both a basin-rescue figure and a post-rescue refinement figure.
+
+Key reading:
+
+- `xyz_polar_staged` again reaches 100% convergence under the tested large-initial-error regime.
+- The staged-initialization panel shows the same early rescue effect: the staged pose initialization reduces roughly `18-142` degree initial pose error to about `0.85-1.0` degrees before final BA.
+- Unlike local BA, the global regime then turns that good pose basin into much stronger structure recovery, driving median structure relative RMSE down to about `0.089`.
+
+What it supports:
+
+- The staged initialization story is not limited to short local BA windows.
+- In a larger multi-view BA, the same pose rescue can unlock much stronger structure and translation refinement once enough geometry is present.
+
+### Local vs Global Difference
+
+The most important difference is **not** whether staged initialization works. In this experiment, it works in both regimes.
+
+The real difference is what the geometry can do **after** the pose basin has been fixed:
+
+- In `local BA`, the main win is basin rescue. The short baseline does not let free-`XYZ` structure become very accurate even after the pose is corrected.
+- In `global BA`, the staged method still matters at initialization, but the larger path and longer tracks let the optimizer convert that pose win into a much larger structure win.
+
+So the current evidence does **not** support the claim that the story is only a local-BA story. A more defensible reading is:
+
+- staged theta/phi initialization is a poor-initialization rescue mechanism for joint BA;
+- that rescue mechanism appears in both local and global synthetic BA;
+- global BA benefits more strongly from extra view redundancy once pose has already been rescued.
+
 ## Current Claim
 
 Supported:
@@ -573,12 +748,15 @@ Supported:
 - `phi` must be wrapped and down-weighted near the optical axis;
 - staged theta/phi initialization can dramatically improve difficult inverse-depth BA convergence in this synthetic setting.
 - staged theta/phi initialization still improves a more realistic multi-view local BA problem with noisy anchor observations and unknown translation components.
+- staged theta/phi initialization still improves a harder free-`XYZ` multi-track BA problem, where the story is better described as pose-structure coupling rather than only pose-depth coupling.
+- under severe synthetic initialization error, the staged story appears in both local and global BA regimes; the global regime mainly differs by converting the rescued pose basin into stronger structure recovery.
 
 Not yet fully proven:
 
 - superiority on real VIO / SLAM datasets;
 - robustness when translation direction, scale, bias, or extrinsics are all simultaneously unknown without auxiliary priors;
 - general advantage across camera models and motion patterns.
+- necessity of the same staged machinery in a well-initialized, full-map global BA with strong external initialization or loop-closure support.
 
 ## Reproduce
 
@@ -587,7 +765,8 @@ cd E:\zuo\projects\RPYPolarSynthetic
 python run_experiment.py
 python run_ba_experiment.py
 python run_exp3_experiment.py
-python -m compileall src run_experiment.py run_ba_experiment.py run_exp3_experiment.py
+python run_exp4_experiment.py
+python -m compileall src run_experiment.py run_ba_experiment.py run_exp3_experiment.py run_exp4_experiment.py
 ```
 
 ## Versioning
@@ -610,3 +789,5 @@ Suggested version labels:
 | `v0.2.4-monte-carlo-metadata` | explicit Monte-Carlo trial counts and aggregation metadata in summary figures |
 | `v0.3.0-realistic-ba-window` | three-view local BA stress test with unknown translations and weak baseline-length priors |
 | `v0.3.1-ba-scene-figures` | Experiment 2/3 scene visualizations, figure interpretation, and synchronized outputs |
+| `v0.4.0-free-xyz-ba-regimes` | free-XYZ multi-track BA comparison between local and global regimes |
+| `v0.4.1-readme-sync` | README synchronization for Experiment 4 figures, results, and local/global BA interpretation |
