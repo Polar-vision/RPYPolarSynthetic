@@ -242,11 +242,18 @@ The reason for freezing those BA variables is deliberate:
 - if depth, translation, or `XYZ` are free too early, they can absorb pose error;
 - that destroys the geometric separation that staged initialization is trying to exploit.
 
-`Exp5` keeps the same per-stage variable split as `Exp4`. The current `run_exp5_experiment.py` schedule simply repeats the staged `theta-only -> phi-only` cycle once before the final joint BA; that repetition changes the schedule, not which variables each stage optimizes.
+`Exp5` keeps the same per-stage variable split as `Exp4`. Earlier Exp5 analysis also tested a repeated staged schedule, but the current `run_exp5_experiment.py` configuration uses the same one-pass staged initialization pattern as the other BA experiments.
 
-### How Does `polar_staged` Enter The Final Joint BA?
+### How Does `staged` Init Enter The Final Joint BA?
 
-`polar_staged` is not a separate terminal solver. It is a basin-finding front-end for the final covariance-aware joint solve.
+Here, `polar_staged` means:
+
+```text
+staged initialization
++ final covariance-aware joint BA
+```
+
+So what actually "enters" the final joint BA is not the whole `polar_staged` method, but its staged initialization output.
 
 The handoff is:
 
@@ -255,53 +262,30 @@ The handoff is:
 3. pack the updated pose variables back into a full experiment state;
 4. use that state as the initialization for the full covariance-aware joint optimization.
 
-So the final optimizer is not starting from the raw Monte-Carlo perturbation. It is starting from a pose that has already been partially untangled.
+So the final optimizer is not starting from the raw Monte-Carlo perturbation. It is starting from a pose that has already been partially untangled by staged initialization.
 
-### Why Exp5 Currently Uses Two Alternations
+### Exp5 Schedule Note
 
-Experiments 1-4 use one `theta-only -> phi-only` pass.
-
-Experiment 5 uses:
+Experiments 1-5 are now run with one staged initialization pass:
 
 ```text
-theta-only -> phi-only -> theta-only -> phi-only -> final joint BA
+theta-only -> phi-only -> final joint BA
 ```
 
-That should be read as:
+For Exp5, additional verification showed that under the current setup:
 
-- one `polar_staged` method call;
-- with two staged initialization cycles inside it;
-- followed by one final covariance-aware joint BA.
+- `staged_cycles=1` and `staged_cycles=2` produce essentially the same convergence and final errors;
+- repeating the full staged solver
+  `theta-only -> phi-only -> final joint BA -> theta-only -> phi-only -> final joint BA`
+  also does not materially improve the final result.
 
-It is **not**:
+So repeated staging should not be treated as a key methodological ingredient.
 
-- run full `polar_staged`;
-- then run full `polar_staged` again.
-
-The intended interpretation is modest:
-
-- Exp5 is a larger and more strongly coupled airborne multi-strip block;
-- the extra cycle is a conservative schedule choice inside the staged initializer;
-- it is **not** the main scientific reason the released Exp5 succeeds.
-
-The more important differences between the failed first Exp5 prototype and the successful released Exp5 are:
+The more important factors behind released Exp5 behavior are:
 
 - the geometry redesign that avoids near-`180 deg` true `roll/pitch` under this repository's rotation convention;
-- and the dense final covariance-aware joint BA used in `run_exp5_experiment.py`.
-
-In the current released setup, rerunning Exp5 with:
-
-- one staged cycle (`theta-only -> phi-only -> final joint BA`)
-- or two staged cycles (`theta-only -> phi-only -> theta-only -> phi-only -> final joint BA`)
-
-produces the same `100%` convergence under the default Monte-Carlo settings.
-
-What does change the outcome is the final joint solve:
-
-- with dense final refinement, both one-cycle and two-cycle schedules reach `100%` convergence;
-- switching the final joint BA back to the Exp4 sparse finite-difference pattern drops staged convergence to about `86.7%` for both schedules under the same default settings.
-
-So this repository does **not** claim that more and more staged cycles must monotonically improve the result. In the current method story, repeated staging should be read as a limited block-coordinate initializer, not as an indefinitely repeated outer loop that replaces final joint BA.
+- the staged front-end itself versus direct joint optimization;
+- and the dense final covariance-aware joint BA.
 
 ## Project Layout
 

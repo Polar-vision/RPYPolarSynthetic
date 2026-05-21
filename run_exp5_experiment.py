@@ -50,7 +50,7 @@ def main() -> None:
         tilt_error_deg=22.0,
         translation_error_m=0.70,
         seed=args.mc_seed,
-        staged_cycles=2,
+        staged_cycles=1,
         staged_final_use_sparsity=False,
     )
     records_array = free_xyz_records_to_array(records)
