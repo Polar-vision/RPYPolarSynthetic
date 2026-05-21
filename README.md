@@ -232,15 +232,17 @@ For the BA experiments, the staged logic is the same but the frozen variables de
 | Experiment family | `theta-only` stage | `phi-only` stage | Final joint stage |
 |---|---|---|---|
 | Experiment 1 pose-only | optimize `roll/pitch`, fix `yaw` | optimize `yaw`, fix updated `roll/pitch` | release all pose variables |
-| Experiment 2 inverse-depth BA | optimize pose rotation only, fix inverse depths | optimize yaw only, fix updated tilt and inverse depths | release pose + inverse depths |
+| Experiment 2 inverse-depth BA | optimize `roll/pitch`, fix `yaw` and inverse depths | optimize `yaw`, fix updated `roll/pitch` and inverse depths | release pose + inverse depths |
 | Experiment 3 realistic local BA | optimize target-view `roll/pitch`, fix target-view yaw, translations, inverse depths | optimize target-view yaw, fix updated tilt, translations, inverse depths | release pose + translations + inverse depths |
 | Experiment 4 free-`XYZ` BA | optimize later-view `roll/pitch`, fix later-view yaw, centers, point `XYZ` | optimize later-view yaw, fix updated tilt, centers, point `XYZ` | release rotations + centers + point `XYZ` |
-| Experiment 5 airborne block | same as Exp4, but with one extra `theta-only -> phi-only` alternation before the final stage | same as Exp4 | release rotations + centers + point `XYZ` |
+| Experiment 5 airborne block | same as Exp4 | same as Exp4 | release rotations + centers + point `XYZ` |
 
 The reason for freezing those BA variables is deliberate:
 
 - if depth, translation, or `XYZ` are free too early, they can absorb pose error;
 - that destroys the geometric separation that staged initialization is trying to exploit.
+
+`Exp5` keeps the same per-stage variable split as `Exp4`. The current `run_exp5_experiment.py` schedule simply repeats the staged `theta-only -> phi-only` cycle once before the final joint BA; that repetition changes the schedule, not which variables each stage optimizes.
 
 ### How Does `polar_staged` Enter The Final Joint BA?
 
@@ -255,7 +257,7 @@ The handoff is:
 
 So the final optimizer is not starting from the raw Monte-Carlo perturbation. It is starting from a pose that has already been partially untangled.
 
-### Why Exp5 Uses Two Alternations
+### Why Exp5 Currently Uses Two Alternations
 
 Experiments 1-4 use one `theta-only -> phi-only` pass.
 
@@ -265,12 +267,41 @@ Experiment 5 uses:
 theta-only -> phi-only -> theta-only -> phi-only -> final joint BA
 ```
 
+That should be read as:
+
+- one `polar_staged` method call;
+- with two staged initialization cycles inside it;
+- followed by one final covariance-aware joint BA.
+
+It is **not**:
+
+- run full `polar_staged`;
+- then run full `polar_staged` again.
+
 The intended interpretation is modest:
 
 - Exp5 is a larger and more strongly coupled airborne multi-strip block;
-- one extra bounded alternation gives tilt and optical-axis yaw one more chance to re-align before the full free-`XYZ` BA is released.
+- the extra cycle is a conservative schedule choice inside the staged initializer;
+- it is **not** the main scientific reason the released Exp5 succeeds.
 
-This repository does **not** claim that more and more staged cycles must monotonically improve the result. In the current method story, repeated staging should be read as a limited block-coordinate initializer, not as an indefinitely repeated outer loop that replaces final joint BA.
+The more important differences between the failed first Exp5 prototype and the successful released Exp5 are:
+
+- the geometry redesign that avoids near-`180 deg` true `roll/pitch` under this repository's rotation convention;
+- and the dense final covariance-aware joint BA used in `run_exp5_experiment.py`.
+
+In the current released setup, rerunning Exp5 with:
+
+- one staged cycle (`theta-only -> phi-only -> final joint BA`)
+- or two staged cycles (`theta-only -> phi-only -> theta-only -> phi-only -> final joint BA`)
+
+produces the same `100%` convergence under the default Monte-Carlo settings.
+
+What does change the outcome is the final joint solve:
+
+- with dense final refinement, both one-cycle and two-cycle schedules reach `100%` convergence;
+- switching the final joint BA back to the Exp4 sparse finite-difference pattern drops staged convergence to about `86.7%` for both schedules under the same default settings.
+
+So this repository does **not** claim that more and more staged cycles must monotonically improve the result. In the current method story, repeated staging should be read as a limited block-coordinate initializer, not as an indefinitely repeated outer loop that replaces final joint BA.
 
 ## Project Layout
 
@@ -1010,7 +1041,7 @@ Important geometry note:
 
 To keep the true poses physically reasonable under this project's `R = Rz(yaw) Ry(pitch) Rx(roll)` convention, the internal Exp5 world uses positive `z` as "downward depth" and the 3D scene figure inverts the `z` axis for visualization. This avoids artificial near-`180 deg` roll/pitch ground-truth poses while still drawing the scene like an airborne block.
 
-The staged solver in this experiment also uses `2` alternating `theta-only / phi-only` cycles before the final covariance-aware joint BA, and its final refinement is run dense rather than with the Exp4 sparse finite-difference pattern. The method is still the same staged story; these details simply make the larger strip-block numerically stable enough to test that story fairly.
+The current `run_exp5_experiment.py` schedule uses `2` alternating `theta-only / phi-only` cycles before the final covariance-aware joint BA, and its final refinement is run dense rather than with the Exp4 sparse finite-difference pattern. The method is still the same staged story, but the decisive factors should be interpreted carefully: in the current released setup, one staged cycle already reproduces the same `100%` convergence, while reverting the final joint BA to the sparse Exp4 pattern drops staged convergence to about `86.7%`. So the extra cycle should be read as a conservative schedule choice, whereas the more important success factors are the geometry redesign above and the dense final refinement that preserves the staged basin rescue.
 
 Configuration:
 
@@ -1146,3 +1177,14 @@ Suggested version labels:
 | `v0.5.1-readme-sync` | README synchronization for Experiment 5, updated reproducibility instructions, and repository version bookkeeping |
 | `v0.5.2-why-polar-why-staged` | text-only README method-introduction chapter explaining the evolution from `uv_joint` to `polar_staged` and the staged BA logic |
 | `v0.5.3-polar-staged-problem-statement` | README clarification of what problem `polar_staged` actually solves, separating residual design from optimization-basin rescue |
+| `v0.5.4-optical-axis-uv-vs-phi` | analysis of whether `uv` becomes physically ill-conditioned near the optical axis and how that differs from `phi` |
+| `v0.5.5-real-world-large-yaw-scenarios` | analysis of when large optical-axis yaw initialization errors arise in practical systems |
+| `v0.5.6-tilt-vs-optical-axis-yaw-observability` | analysis of why optical-axis yaw is often less reliable or less constrained than tilt in real pipelines |
+| `v0.5.7-polar-staged-vs-alternating-ba` | analysis comparing this repository's staged initialization with classical alternating BA |
+| `v0.5.8-poor-pose-initialization-scenarios` | analysis of common real-world scenarios that create poor pose initialization |
+| `v0.5.9-exp2-staged-table-fix` | README correction clarifying that Exp2 theta-only optimizes `roll/pitch` while fixing `yaw` and inverse depths |
+| `v0.5.10-exp5-two-staged-cycles-not-two-polar-staged` | clarification that Exp5 uses one `polar_staged` solve with two staged cycles, not two full `polar_staged` runs |
+| `v0.5.11-second-theta-cycle-gain` | analysis showing the second Exp5 theta-only pass has little geometric gain under the current parameterization |
+| `v0.5.12-second-theta-is-mostly-extra-optimization-budget` | short note interpreting Exp5's second theta-only pass as mostly extra optimization budget / restart effect |
+| `v0.5.13-exp5-one-vs-two-staged-cycles` | direct rerun comparing one versus two staged cycles in Exp5 and finding no measurable convergence gain in the current setup |
+| `v0.5.14-exp5-success-factors` | correction of the released Exp5 success factors, emphasizing geometry redesign and dense final refinement over the second staged cycle |
