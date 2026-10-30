@@ -10,6 +10,9 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Git Bash reports /e/... while Chrome needs E:/... ; pwd -W gives the Windows
+# form, and the fallback keeps the script usable under a POSIX shell.
+HERE_WIN="$(cd "$HERE" && pwd -W 2>/dev/null || printf '%s' "$HERE")"
 ANALYSIS="$(dirname "$HERE")"
 PY="${PY:-E:/zuo/Program Files/Python311/python.exe}"
 CHROME="${CHROME:-/c/Program Files/Google/Chrome/Application/chrome.exe}"
@@ -22,8 +25,8 @@ node build_pdf.js
 "$CHROME" --headless=new --disable-gpu --no-sandbox \
   --no-pdf-header-footer --run-all-compositor-stages-before-draw \
   --virtual-time-budget=60000 \
-  --print-to-pdf="$HERE/report_raw.pdf" \
-  "file:///$HERE/report.html" 2>&1 | tail -1
+  --print-to-pdf="$HERE_WIN/report_raw.pdf" \
+  "file:///$HERE_WIN/report.html" 2>&1 | tail -1
 
 "$PY" stamp.py report_raw.pdf report_stamped.pdf
 

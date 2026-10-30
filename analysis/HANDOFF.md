@@ -26,7 +26,8 @@
 | 文件 | 作用 |
 |---|---|
 | `analysis/technical_report_polar_geometry.md` | **主报告（唯一源）**，约 70 页，含 §1–§12 + 参考文献 + 复现入口 |
-| `analysis/technical_report_polar_geometry.pdf` | **当前 PDF（72 页，已含 §9.14）**，由 `analysis/_build/make.sh` 一键重建；worktree 内为 `..._72p.pdf`（无后缀那份被预览面板锁住） |
+| `analysis/technical_report_polar_geometry.pdf` | **当前 PDF（74 页，已含 §9.14 与 §9.15）**，由 `analysis/_build/make.sh` 一键重建；worktree 内另存 `..._72p.pdf`（无后缀那份被预览面板锁住） |
+| `analysis/v0.9.15-five-scenarios.md` | §9.15 的完整版（比正文更细，含逐场景表格与两条被推翻的旧判断） |
 | `src/rpy_polar_synth/` | 全部 Python 源码（30 个模块；报告主打的是下列 14 个） |
 | `run_*.py` / `plot_*.py` | 各实验的运行脚本与绘图脚本（仓库根目录） |
 | `outputs_*/` | 各实验的原始 CSV/JSON 数据 |
@@ -43,7 +44,8 @@
 - `scenario_audit.py` — 五场景审计
 - `astro_crosscheck.py` — astroplan 交叉校验
 - `cv_nbv.py` — LLFF 下一视角
-- `safety_scenarios.py` — **§9.14 三安全场景（本次新增）**
+- `safety_scenarios.py` — **§9.14 三安全场景**
+- `next_scenarios.py` — **§9.15 五个延伸场景（S1/S1b/S1c/S2–S5）**，复用 `safety_scenarios` 的 `grid_verdict` / `branch_verdict`，另含一维区间分支 `interval_branch_1d`
 
 ---
 
@@ -72,7 +74,7 @@
 
 ---
 
-## 3. §9.14 三安全场景验证（本次会话的最终成果）
+## 3. §9.14 三安全场景验证
 
 **代码**：`src/rpy_polar_synth/safety_scenarios.py`、`run_safety_scenarios.py`、`plot_safety_scenarios.py`
 **数据**：`outputs_safety/`（6 个 CSV + 1 JSON）
@@ -100,6 +102,34 @@
 
 ---
 
+## 3b. §9.15 五延伸场景验证（本次会话成果）
+
+把 §9.14 之后能想到的五个“结构同构”场景逐个写成 cap 代数，用同一协议跑完，**结论比 §9.14 更窄**。七个场景（S1 拆成 S1/S1b/S1c）的裁决：
+
+| 场景 | 网格错了吗 | 分支错了吗 | 分支给出证明 | 独有优势 |
+|---|---|---|---|---|
+| S1 航天器套件（20 例，8–208 约束） | 否 | 否 | 需覆盖全框（中位 101 盒，最坏 421） | 弱（只有代价） |
+| S1b 掠射太阳（12 例，构造真值） | **是，0.5°/0.25° 各漏 2/10** | 否（2 例未定） | 部分 | 中 |
+| S1c 目标在禁区（12 例，构造不可行） | 只能说“没找到” | 否 | **12/12，均 1 节点** | **强** |
+| S2 放疗（17 例，闭式真值） | 1/17（精确切点） | 否 | 4/13 | **弱** |
+| S3 装调公差（15 例，闭式真值） | 对但无证明；**逐对检查错 9/15** | 否 | **9/9，≤69 节点** | **强** |
+| S4 过境窗口（11×4，闭式真值） | 5° 步长漏 3/6 | 否 | 4 例 CLEAN_PROVEN | 中 |
+| S5 机械臂（24 可行 + 6 覆盖） | 对但无证明 | 否 | **6/6，165–253 节点** | 中 |
+
+**三条能记住的：**
+
+1. **不可行证明在所有场景都便宜**：不可行时一个反例约束杀掉整块（S1c 1 节点、S3 ≤69、S5 165–253），可行时必须覆盖全框（4677–25629 盒）。**“证明没有”比“证明有”便宜 1–2 个数量级。**
+2. **真正不可替代的只有 S3（光机装调公差）**，因为只有它有**工业界正在用、且会错的判据**（逐对检查在 `τ∈[0.88,0.99]`、宽 `13.4%` 的窗口内假可行 9/15）。其余场景网格的错都落在**精确切点**（1.99°、16.0°、τ=1.0、over=0），零测度，工程上加余量就能绕开。
+3. **“会说不知道”是可交付的**：四例未定的残差都报出来了（5.4e-6、9.1e-6、8.2e-7 sr 与 0.70°）。网格原理上给不出这个量。
+
+**口径修正（务必沿用）**：`NO_RESIDUE` **不是主张**，是“没定 + 剩余面积”。计分必须三分类（YES / NO_PROVEN / UNDECIDED），只有前两类可能错。上一轮把它算成误判，导致 S1b 的 1.99° 被误记为分支失误；`run_case` 已改为输出 `branch_claim` / `branch_wrong` / `branch_undecided` 三个字段。
+
+**代码**：`src/rpy_polar_synth/next_scenarios.py`、`run_next_scenarios.py`、`plot_next_scenarios.py`
+**数据**：`outputs_next/`（8 个 CSV + `summary.json`）；图 `analysis/figures/next_scenarios.png`；完整版 `analysis/v0.9.15-five-scenarios.md`
+**已知局限（写进报告了，别当结论用）**：S1 与 S5 随机族的真值来自分支本身（自洽性，不是检验）；约束规模只到 208，`10³` 量级未测；五场景都只到几何层，没接真实 ICD/星表/器官轮廓。
+
+---
+
 ## 4. 已知坑与约定（新账号继续时必须遵守）
 
 ### 运行环境
@@ -117,6 +147,7 @@
 6. `local_to_enu` 的 lon 已是弧度，勿重复乘 DEG。
 7. 构造"绕 x 轴的环"要 `cosρ·x̂ + sinρ(cosα ŷ + sinα ẑ)`，勿用绕 z 轴的方位/仰角（会得到极区小圆）。
 8. matplotlib 图注里 `\n` 会被替换成字面 `/n`；中文图注不显示，全部用英文。
+9. **`make.sh` 里给 Chrome 的 `file://` URL 必须用 Windows 路径**：Git Bash 的 `pwd` 返回 `/e/zuo/...`，直接拼成 `file:////e/...` 会让 Chrome 报 `ERR_FILE_NOT_FOUND`——而 `stamp.py` 照样会把**上一次的** `report_raw.pdf` 盖好页码并覆盖正式 PDF，看起来“构建成功”但内容是旧的。脚本已改用 `pwd -W`，若再遇页数没变，先删 `report_raw.pdf` 再跑。
 
 ### 报告修订的纪律（本项目一贯做法）
 - **每次扩展都用实验去"拆"自己的承重假设**，拆掉就如实降级、甚至撤回自己先前写的话（§9.10、§9.13 都这么做过）。
@@ -129,10 +160,12 @@
 
 按优先级：
 
-1. ~~**重建 PDF**~~ **已完成（2026-10-31）**：`analysis/technical_report_polar_geometry.pdf` 已是 72 页、含 §9.14 的版本。工具链重建在 `analysis/_build/`（`build_pdf.js` → 无头 Chrome → `stamp.py` 盖“N / M”页码，首页不编号，与旧版一致），后续改完 md 只需 `bash analysis/_build/make.sh`。注意：worktree 里那份无后缀 PDF 仍被预览面板锁住（WinError 5/Device busy），只能写 `..._72p.pdf`。
-2. **git 提交**：主仓有大量未提交变更（本次 + 历史会话），建议提交 §9.14 相关文件（md、safety_scenarios.py、run/plot_safety_scenarios.py、outputs_safety/、safety_scenarios.png）。注意 `ffe324f` 已提交过 §9.14 与 HANDOFF 本体，当前未提交的主要是 README / `analysis/*.md` 里追加的“中文对照”区块与一批重跑的 CSV/PNG，提交前需先决定要不要这些。
-3. **真实数据验证（§11.1 第 3 项）**：接入真实星敏星表、编码器、终端质心，重估 §10.5 的"真实噪声非各向同性"风险。
-4. **可观测域真实排程对标（§11.1 第 9 项的后半）**：用望远镜实际排程日志比对可行窗口起止时刻，且必须先补岁差缺口（§9.12.2）。
+1. ~~**重建 PDF**~~ **已完成（2026-10-31）**：`analysis/technical_report_polar_geometry.pdf` 已含 §9.14 与 §9.15（74 页）。工具链在 `analysis/_build/`（`build_pdf.js` → 无头 Chrome → `stamp.py` 盖“N / M”页码，首页不编号，与旧版一致），改完 md 只需 `bash analysis/_build/make.sh`。注意：worktree 里那份无后缀 PDF 仍可能被预览面板锁住（WinError 5/Device busy），只能写带页数后缀的新文件名。
+2. **git 提交**：主仓仍有大量未提交变更（含 200 处历史改动：README 与 `analysis/*.md` 里追加的“中文对照”区块、一批重跑的 CSV/PNG）。本次只提交 §9.15 相关的 md/源码/脚本/`outputs_next/`/图/PDF 与 `_build/make.sh` 的 Git Bash 路径修复，其余不动。
+3. **S1/S5 的独立真值（§9.15 遗留）**：这两个族的真值目前来自分支本身，要变成真正检验，需要造独立真值族（构造性可覆盖 / 构造性留缝），做法照 S1b/S1c。
+4. **约束规模外推（§9.15 遗留）**：实测只到 208 约束；真实星表是 `10²–10³` 颗，`19` ms 不能直接外推，需在 `10³` 量级重测分支代价。
+5. **真实数据验证（§11.1 第 3 项）**：接入真实星敏星表、编码器、终端质心，重估 §10.5 的"真实噪声非各向同性"风险。
+6. **可观测域真实排程对标（§11.1 第 9 项的后半）**：用望远镜实际排程日志比对可行窗口起止时刻，且必须先补岁差缺口（§9.12.2）。
 
 ### 若继续做 CV/AI 方向（§11 第 12 项）
 - 只做**硬约束规划的不可行证明、边界证书、反例生成**；把三种安全外壳（§9.14）当作"证明型组件"的落地场景。
