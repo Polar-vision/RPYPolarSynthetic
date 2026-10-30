@@ -1,0 +1,8 @@
+{
+  "n_proposals": 300,
+  "noisy": 100,
+  "uniform": 100,
+  "boundary": 100,
+  "accepted": 192,
+  "feasible_fraction_cap": 0.039733573078011335
+}
