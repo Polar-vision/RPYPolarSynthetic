@@ -26,8 +26,8 @@
 | 文件 | 作用 |
 |---|---|
 | `analysis/technical_report_polar_geometry.md` | **主报告（唯一源）**，约 70 页，含 §1–§12 + 参考文献 + 复现入口 |
-| `analysis/technical_report_polar_geometry_69p.pdf` | 最近一次 PDF（69 页，worktree 内；主仓为 `..._pdf` 无后缀） |
-| `src/rpy_polar_synth/` | 全部 Python 源码（16 个模块，见下） |
+| `analysis/technical_report_polar_geometry.pdf` | **当前 PDF（72 页，已含 §9.14）**，由 `analysis/_build/make.sh` 一键重建；worktree 内为 `..._72p.pdf`（无后缀那份被预览面板锁住） |
+| `src/rpy_polar_synth/` | 全部 Python 源码（30 个模块；报告主打的是下列 14 个） |
 | `run_*.py` / `plot_*.py` | 各实验的运行脚本与绘图脚本（仓库根目录） |
 | `outputs_*/` | 各实验的原始 CSV/JSON 数据 |
 | `analysis/figures/` | 全部图 |
@@ -106,6 +106,7 @@
 - **必须用 `E:/zuo/Program Files/Python311/python.exe`**（系统默认 3.13 无 numpy；本项目固定 `numpy 1.26.4`）。
 - 运行脚本加 `PYTHONPATH=src`（或 `sys.path.insert(0, ROOT/"src")`）。
 - astroplan 交叉校验（§9.12）额外需要 `astropy 7.2.3` + `astroplan 0.10.1`；其余脚本不依赖它们。
+- **PDF 构建**：`bash analysis/_build/make.sh`（node 22 + 本机 Chrome + 上面那个 Python，需 `pypdf` `reportlab`）。工具链源码 `build_pdf.js` / `stamp.py` / `package.json` 已随仓库版本化，`node_modules/` 与中间产物被 gitignore；首次运行 `npm install` 由脚本自动完成。
 
 ### 代码/构建坑（历史踩过，勿重蹈）
 1. **写公式避免经 shell/heredoc 传反斜杠**（会变 `//`）；用 `chr(92)` 拼接，或直接用 Edit/Write 工具写文件。
@@ -128,8 +129,8 @@
 
 按优先级：
 
-1. **重建 PDF**（当前 PDF 是 69 页，缺 §9.14；md 已是 70 页的最新源）。构建工具链（build_pdf.js + stamp.py + node_modules）已不在主仓，需要重建：markdown-it + texmath + KaTeX → 无头 Chrome print-to-pdf → pypdf+reportlab 盖页码。**这是本次会话未完成的一件实物交付。**
-2. **git 提交**：主仓有大量未提交变更（本次 + 历史会话），建议提交 §9.14 相关文件（md、safety_scenarios.py、run/plot_safety_scenarios.py、outputs_safety/、safety_scenarios.png）。
+1. ~~**重建 PDF**~~ **已完成（2026-10-31）**：`analysis/technical_report_polar_geometry.pdf` 已是 72 页、含 §9.14 的版本。工具链重建在 `analysis/_build/`（`build_pdf.js` → 无头 Chrome → `stamp.py` 盖“N / M”页码，首页不编号，与旧版一致），后续改完 md 只需 `bash analysis/_build/make.sh`。注意：worktree 里那份无后缀 PDF 仍被预览面板锁住（WinError 5/Device busy），只能写 `..._72p.pdf`。
+2. **git 提交**：主仓有大量未提交变更（本次 + 历史会话），建议提交 §9.14 相关文件（md、safety_scenarios.py、run/plot_safety_scenarios.py、outputs_safety/、safety_scenarios.png）。注意 `ffe324f` 已提交过 §9.14 与 HANDOFF 本体，当前未提交的主要是 README / `analysis/*.md` 里追加的“中文对照”区块与一批重跑的 CSV/PNG，提交前需先决定要不要这些。
 3. **真实数据验证（§11.1 第 3 项）**：接入真实星敏星表、编码器、终端质心，重估 §10.5 的"真实噪声非各向同性"风险。
 4. **可观测域真实排程对标（§11.1 第 9 项的后半）**：用望远镜实际排程日志比对可行窗口起止时刻，且必须先补岁差缺口（§9.12.2）。
 
@@ -151,5 +152,5 @@
 - [ ] 读本文件第 0 节（三句话）与第 2 节（主线）
 - [ ] 确认 Python 用 3.11、`PYTHONPATH=src`
 - [ ] 确认主仓与 worktree 内容一致（尤其 md 与 outputs_safety/）
-- [ ] 重建 PDF（未完成事项第 1 项）
+- [x] 重建 PDF（已完成，72 页；改 md 后跑 `bash analysis/_build/make.sh`）
 - [ ] git 提交 §9.14 成果（未完成事项第 2 项）
