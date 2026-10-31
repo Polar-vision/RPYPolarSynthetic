@@ -1,0 +1,11 @@
+﻿channel,allocation_arcsec,allocation_urad,section,kind,note
+LROC-NAC-L,300,1454,9.4.1,align-to-SC,"aligned to the spacecraft reference to within 300 arc-seconds (1454 microradians) per axis"
+LROC-NAC-R,300,1454,9.4.1,align-to-SC,"same clause as NAC-L; the two NACs are separate channels with separate cubes"
+LROC-WAC,300,1454,10.4.1,align-to-SC,"LROC-WAC will be aligned to the spacecraft reference to within 300 arc-seconds per axis"
+LOLA,300,1454,8.4.1,align-to-SC,"LOLA will be aligned to the spacecraft reference to within 300 arc-seconds per axis"
+LAMP,300,1450,6.4.1,align-to-SC,"300 arc-seconds per axis; alignment knowledge additionally 30 arc-seconds"
+Diviner,500,2423,5.4.1,align-to-SC,"Diviner will be aligned to the spacecraft reference to within 500 arc-seconds per axis"
+CRaTER,500,2423,4.4.1,align-to-SC,"CRaTER will be aligned to the spacecraft reference to within 500 arc-seconds per axis"
+LEND,500,2423,7.4.1,align-to-SC,"alignment to spacecraft reference 500 arc-seconds; Doppler filter 10149 arc-seconds"
+Mini-RF,750,3634,11.3.1,align-to-SC,"Mini-RF will be aligned to the spacecraft reference to within 750 arc-seconds per axis"
+LR-telescope,36,175,Table 12-1,align-to-SC,"LRT boresight alignment capability at installation 0.010 deg = 36 arc-seconds"
