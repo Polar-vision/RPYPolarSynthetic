@@ -7,9 +7,8 @@
 
 ## 0. 一句话
 
-**骨架换完了，§5 五步压缩已执行，文献也从 12 条补到 22 条并全部核过 DOI/卷期页。**
-剩下的主要是投稿事务：作者信息、ORCID、超页费决策。唯一仍建议在投稿前重算的是
-Table IV / Fig. 4(a)：目前 regime map 是 3000 抽样，最好按 8000 抽样重跑并同步正文。
+**骨架、压缩、文献、作者、8000 抽样全部就位。** 剩下的投稿事务只有：ORCID（投稿系统填）、
+超页费决策、cover letter 说明来源。所有实验数字已用 8000 抽样重跑并同步正文与图 4。
 
 ## 1. TIM 硬性项
 
@@ -22,8 +21,8 @@ Table IV / Fig. 4(a)：目前 regime map 是 3000 抽样，最好按 8000 抽样
 | 文献编号 | 按**首次引用**顺序 | 已校验：[1]→[22] 严格按首次出现 | ✅ |
 | 文献数量 | 常规 20–30 条 | 22 条，含 LROC 标定、bundle adjustment、alignment Kalman filter、tolerance review、conformity assessment | ✅ |
 | 图件 | 单独文件，≥300 dpi | 已按 400 dpi 重导出（`plot_*.py` 已改） | ✅ |
-| 作者 ORCID | **每位作者都必须有**，投稿时填 | 占位 | ❌ |
-| 首页脚注 | 收稿日期、基金、利益冲突、单位与邮箱 | 已有占位段 | ⚠️ 待填 |
+| 作者 ORCID | **每位作者都必须有**，投稿时填 | 唯一作者 Zhengkang Zuo，ORCID 投稿系统填 | ⚠️ 待填 ORCID |
+| 首页脚注 | 收稿日期、基金、利益冲突、单位与邮箱 | 已填：Polar-vision Laboratory, College of Geoscience and Surveying Engineering, TYUT；zuozhengkang@tyut.edu.cn | ✅ |
 | 文件大小 | ≤20 MB | 正文 2.6 MB + 补充材料 0.3 MB | ✅ |
 | 作者简介 | TIM 不刊 | 未写 | ✅ |
 | 大修机会 | 只有一次大修，3 周；二次大修自动拒 | — | 提醒 |
@@ -53,14 +52,12 @@ Table IV / Fig. 4(a)：目前 regime map 是 3000 抽样，最好按 8000 抽样
 
 ## 3. 还缺什么（按被拒风险排序）
 
-1. **Table IV / Fig. 4(a) 仍是 3000 抽样。** 不是逻辑问题，但投稿前最好用 8000 抽样重跑
-   `run_regime_map.py` 并同步表 IV、图 4(a) 与 §VIII-A 的峰值口径。
-2. **ORCID 与作者信息。**
-3. **超页费**：$530–795 量级；§5 的五步已经执行，若仍要免超页费，只能继续删正文，
+1. **ORCID**：唯一作者 Zhengkang Zuo，投稿系统填 ORCID 即可，正文无占位。
+2. **超页费**：$530–795 量级；§5 的五步已执行，若仍要免超页费只能继续删正文，
    不建议再动 §III-F、§VI-B、§VII-A。
-4. **是否披露"源自内部技术报告"**：不是一稿多投（未发表、未投稿），但 cover letter
+3. **是否披露"源自内部技术报告"**：不是一稿多投（未发表、未投稿），但 cover letter
    里一句话说明来源，比被审稿人问出来好。
-5. **文献条目已实检。** 10 条新增文献 + 7 条旧经典文献的卷期页/DOI 已核对；Chase–Parkinson
+4. **文献条目已实检。** 10 条新增文献 + 7 条旧经典文献的卷期页/DOI 已核对；Chase–Parkinson
    页码已修正为 23–37。
 
 ## 4. 三个必须再核的论断（沿用旧清单，未变）
@@ -86,7 +83,7 @@ bash analysis/_build/make_paper.sh tim_manuscript     # 本稿
 bash analysis/_build/make_paper.sh tim_supplement     # 补充材料（Fig. S-1）
 bash analysis/_build/make_paper.sh                    # Measurement 版（旧稿）
 PYTHONPATH=src python run_ress.py && python plot_ress.py   # 图 3 与 Fig. S-1 的数据
-PYTHONPATH=src python run_regime_map.py && python plot_regime.py  # 图 4 的数据；投稿前建议改 8000 抽样
+PYTHONPATH=src python run_regime_map.py && python plot_regime.py  # 图 4 的数据（已 8000 抽样）
 ```
 
 图号表号已按出现顺序固定（正文 Fig. 1–4、TABLE I–VIII；补充材料 Fig. S-1）。

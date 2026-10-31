@@ -3,224 +3,224 @@
     {
       "n": 3,
       "A_over_sigma": 0.8,
-      "rate_pairwise": 0.192,
-      "rate_exact": 0.186,
-      "missed_by_pairwise": 0.006,
+      "rate_pairwise": 0.188625,
+      "rate_exact": 0.183375,
+      "missed_by_pairwise": 0.00525,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.019
+      "rate_per_channel": 0.01925
     },
     {
       "n": 3,
       "A_over_sigma": 1.0,
-      "rate_pairwise": 0.344,
-      "rate_exact": 0.339,
-      "missed_by_pairwise": 0.005,
+      "rate_pairwise": 0.3465,
+      "rate_exact": 0.339625,
+      "missed_by_pairwise": 0.006875,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.063
+      "rate_per_channel": 0.059375
     },
     {
       "n": 3,
       "A_over_sigma": 1.2,
-      "rate_pairwise": 0.5133333333333333,
-      "rate_exact": 0.5073333333333333,
-      "missed_by_pairwise": 0.006,
+      "rate_pairwise": 0.52125,
+      "rate_exact": 0.51325,
+      "missed_by_pairwise": 0.008,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.13533333333333333
+      "rate_per_channel": 0.134375
     },
     {
       "n": 3,
       "A_over_sigma": 1.5,
-      "rate_pairwise": 0.7466666666666667,
-      "rate_exact": 0.7413333333333333,
-      "missed_by_pairwise": 0.005333333333333333,
+      "rate_pairwise": 0.75525,
+      "rate_exact": 0.75125,
+      "missed_by_pairwise": 0.004,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.31
+      "rate_per_channel": 0.308
     },
     {
       "n": 3,
       "A_over_sigma": 1.8,
-      "rate_pairwise": 0.896,
-      "rate_exact": 0.893,
-      "missed_by_pairwise": 0.003,
+      "rate_pairwise": 0.90125,
+      "rate_exact": 0.898125,
+      "missed_by_pairwise": 0.003125,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.5103333333333333
+      "rate_per_channel": 0.515125
     },
     {
       "n": 3,
       "A_over_sigma": 2.0,
-      "rate_pairwise": 0.9496666666666667,
-      "rate_exact": 0.949,
-      "missed_by_pairwise": 0.0006666666666666666,
+      "rate_pairwise": 0.95225,
+      "rate_exact": 0.951625,
+      "missed_by_pairwise": 0.000625,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.6386666666666667
+      "rate_per_channel": 0.6465
     },
     {
       "n": 3,
       "A_over_sigma": 2.4,
-      "rate_pairwise": 0.993,
-      "rate_exact": 0.993,
+      "rate_pairwise": 0.9915,
+      "rate_exact": 0.9915,
       "missed_by_pairwise": 0.0,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.8436666666666667
+      "rate_per_channel": 0.84325
     },
     {
       "n": 3,
       "A_over_sigma": 3.0,
-      "rate_pairwise": 0.9996666666666667,
-      "rate_exact": 0.9996666666666667,
+      "rate_pairwise": 0.99975,
+      "rate_exact": 0.99975,
       "missed_by_pairwise": 0.0,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.9683333333333334
+      "rate_per_channel": 0.967625
     },
     {
       "n": 4,
       "A_over_sigma": 0.8,
-      "rate_pairwise": 0.069,
-      "rate_exact": 0.06533333333333333,
-      "missed_by_pairwise": 0.0036666666666666666,
+      "rate_pairwise": 0.066875,
+      "rate_exact": 0.063625,
+      "missed_by_pairwise": 0.00325,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.006333333333333333
+      "rate_per_channel": 0.006125
     },
     {
       "n": 4,
       "A_over_sigma": 1.0,
-      "rate_pairwise": 0.18366666666666667,
-      "rate_exact": 0.17266666666666666,
-      "missed_by_pairwise": 0.011,
+      "rate_pairwise": 0.1775,
+      "rate_exact": 0.16925,
+      "missed_by_pairwise": 0.00825,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.022333333333333334
+      "rate_per_channel": 0.021875
     },
     {
       "n": 4,
       "A_over_sigma": 1.2,
-      "rate_pairwise": 0.3576666666666667,
-      "rate_exact": 0.3433333333333333,
-      "missed_by_pairwise": 0.014333333333333333,
+      "rate_pairwise": 0.344375,
+      "rate_exact": 0.33125,
+      "missed_by_pairwise": 0.013125,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.07233333333333333
+      "rate_per_channel": 0.06825
     },
     {
       "n": 4,
       "A_over_sigma": 1.5,
-      "rate_pairwise": 0.6416666666666667,
-      "rate_exact": 0.6283333333333333,
-      "missed_by_pairwise": 0.013333333333333334,
+      "rate_pairwise": 0.622375,
+      "rate_exact": 0.61075,
+      "missed_by_pairwise": 0.011625,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.224
+      "rate_per_channel": 0.2135
     },
     {
       "n": 4,
       "A_over_sigma": 1.8,
-      "rate_pairwise": 0.8373333333333334,
-      "rate_exact": 0.829,
-      "missed_by_pairwise": 0.008333333333333333,
+      "rate_pairwise": 0.828875,
+      "rate_exact": 0.822,
+      "missed_by_pairwise": 0.006875,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.42933333333333334
+      "rate_per_channel": 0.418125
     },
     {
       "n": 4,
       "A_over_sigma": 2.0,
-      "rate_pairwise": 0.9156666666666666,
+      "rate_pairwise": 0.914,
       "rate_exact": 0.91,
-      "missed_by_pairwise": 0.005666666666666667,
+      "missed_by_pairwise": 0.004,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.5833333333333334
+      "rate_per_channel": 0.566625
     },
     {
       "n": 4,
       "A_over_sigma": 2.4,
-      "rate_pairwise": 0.9833333333333333,
-      "rate_exact": 0.9826666666666667,
-      "missed_by_pairwise": 0.0006666666666666666,
+      "rate_pairwise": 0.98375,
+      "rate_exact": 0.983375,
+      "missed_by_pairwise": 0.000375,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.803
+      "rate_per_channel": 0.79575
     },
     {
       "n": 4,
       "A_over_sigma": 3.0,
-      "rate_pairwise": 0.9996666666666667,
-      "rate_exact": 0.9996666666666667,
+      "rate_pairwise": 0.99975,
+      "rate_exact": 0.99975,
       "missed_by_pairwise": 0.0,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.9553333333333334
+      "rate_per_channel": 0.954125
     },
     {
       "n": 5,
       "A_over_sigma": 0.8,
-      "rate_pairwise": 0.02266666666666667,
-      "rate_exact": 0.02033333333333333,
-      "missed_by_pairwise": 0.0023333333333333335,
+      "rate_pairwise": 0.022875,
+      "rate_exact": 0.020875,
+      "missed_by_pairwise": 0.002,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.0026666666666666666
+      "rate_per_channel": 0.001875
     },
     {
       "n": 5,
       "A_over_sigma": 1.0,
-      "rate_pairwise": 0.08733333333333333,
-      "rate_exact": 0.08133333333333333,
-      "missed_by_pairwise": 0.006,
+      "rate_pairwise": 0.088,
+      "rate_exact": 0.081875,
+      "missed_by_pairwise": 0.006125,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.008333333333333333
+      "rate_per_channel": 0.009125
     },
     {
       "n": 5,
       "A_over_sigma": 1.2,
-      "rate_pairwise": 0.223,
-      "rate_exact": 0.20666666666666667,
-      "missed_by_pairwise": 0.01633333333333333,
+      "rate_pairwise": 0.22025,
+      "rate_exact": 0.206875,
+      "missed_by_pairwise": 0.013375,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.035666666666666666
+      "rate_per_channel": 0.034875
     },
     {
       "n": 5,
       "A_over_sigma": 1.5,
-      "rate_pairwise": 0.504,
-      "rate_exact": 0.48333333333333334,
-      "missed_by_pairwise": 0.020666666666666667,
+      "rate_pairwise": 0.49425,
+      "rate_exact": 0.47825,
+      "missed_by_pairwise": 0.016,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.14133333333333334
+      "rate_per_channel": 0.142125
     },
     {
       "n": 5,
       "A_over_sigma": 1.8,
-      "rate_pairwise": 0.7566666666666667,
-      "rate_exact": 0.7496666666666667,
-      "missed_by_pairwise": 0.007,
+      "rate_pairwise": 0.753375,
+      "rate_exact": 0.74475,
+      "missed_by_pairwise": 0.008625,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.33866666666666667
+      "rate_per_channel": 0.337625
     },
     {
       "n": 5,
       "A_over_sigma": 2.0,
-      "rate_pairwise": 0.877,
-      "rate_exact": 0.8696666666666667,
-      "missed_by_pairwise": 0.007333333333333333,
+      "rate_pairwise": 0.870375,
+      "rate_exact": 0.8635,
+      "missed_by_pairwise": 0.006875,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.49333333333333335
+      "rate_per_channel": 0.488875
     },
     {
       "n": 5,
       "A_over_sigma": 2.4,
-      "rate_pairwise": 0.977,
-      "rate_exact": 0.9753333333333334,
-      "missed_by_pairwise": 0.0016666666666666668,
+      "rate_pairwise": 0.973625,
+      "rate_exact": 0.97225,
+      "missed_by_pairwise": 0.001375,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.7643333333333333
+      "rate_per_channel": 0.7565
     },
     {
       "n": 5,
       "A_over_sigma": 3.0,
-      "rate_pairwise": 0.9986666666666667,
-      "rate_exact": 0.9986666666666667,
+      "rate_pairwise": 0.99775,
+      "rate_exact": 0.99775,
       "missed_by_pairwise": 0.0,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.9496666666666667
+      "rate_per_channel": 0.94975
     },
     {
       "n": 9,
       "A_over_sigma": 0.8,
-      "rate_pairwise": 0.0006666666666666666,
-      "rate_exact": 0.0006666666666666666,
+      "rate_pairwise": 0.00025,
+      "rate_exact": 0.00025,
       "missed_by_pairwise": 0.0,
       "missed_by_per_channel": 0.0,
       "rate_per_channel": 0.0
@@ -228,65 +228,65 @@
     {
       "n": 9,
       "A_over_sigma": 1.0,
-      "rate_pairwise": 0.007,
-      "rate_exact": 0.007,
-      "missed_by_pairwise": 0.0,
+      "rate_pairwise": 0.00475,
+      "rate_exact": 0.00425,
+      "missed_by_pairwise": 0.0005,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.002
+      "rate_per_channel": 0.00075
     },
     {
       "n": 9,
       "A_over_sigma": 1.2,
-      "rate_pairwise": 0.029333333333333333,
-      "rate_exact": 0.025,
-      "missed_by_pairwise": 0.004333333333333333,
+      "rate_pairwise": 0.028625,
+      "rate_exact": 0.023875,
+      "missed_by_pairwise": 0.00475,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.004333333333333333
+      "rate_per_channel": 0.0025
     },
     {
       "n": 9,
       "A_over_sigma": 1.5,
-      "rate_pairwise": 0.17666666666666667,
-      "rate_exact": 0.16066666666666668,
-      "missed_by_pairwise": 0.016,
+      "rate_pairwise": 0.17775,
+      "rate_exact": 0.15875,
+      "missed_by_pairwise": 0.019,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.030333333333333334
+      "rate_per_channel": 0.0285
     },
     {
       "n": 9,
       "A_over_sigma": 1.8,
-      "rate_pairwise": 0.4876666666666667,
-      "rate_exact": 0.459,
-      "missed_by_pairwise": 0.028666666666666667,
+      "rate_pairwise": 0.474625,
+      "rate_exact": 0.4485,
+      "missed_by_pairwise": 0.026125,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.141
+      "rate_per_channel": 0.13775
     },
     {
       "n": 9,
       "A_over_sigma": 2.0,
-      "rate_pairwise": 0.6883333333333334,
-      "rate_exact": 0.6646666666666666,
-      "missed_by_pairwise": 0.023666666666666666,
+      "rate_pairwise": 0.6825,
+      "rate_exact": 0.66075,
+      "missed_by_pairwise": 0.02175,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.2713333333333333
+      "rate_per_channel": 0.265125
     },
     {
       "n": 9,
       "A_over_sigma": 2.4,
-      "rate_pairwise": 0.92,
-      "rate_exact": 0.9143333333333333,
-      "missed_by_pairwise": 0.005666666666666667,
+      "rate_pairwise": 0.922,
+      "rate_exact": 0.9165,
+      "missed_by_pairwise": 0.0055,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.6053333333333333
+      "rate_per_channel": 0.60275
     },
     {
       "n": 9,
       "A_over_sigma": 3.0,
-      "rate_pairwise": 0.996,
-      "rate_exact": 0.9956666666666667,
-      "missed_by_pairwise": 0.0003333333333333333,
+      "rate_pairwise": 0.9965,
+      "rate_exact": 0.996125,
+      "missed_by_pairwise": 0.000375,
       "missed_by_per_channel": 0.0,
-      "rate_per_channel": 0.9076666666666666
+      "rate_per_channel": 0.91125
     }
   ],
   "heterogeneity": [
@@ -294,57 +294,57 @@
       "n": 9,
       "A_max_over_A_min": 1.0,
       "A_min_over_sigma": 1.5,
-      "rate_pairwise": 0.17233333333333334,
-      "rate_exact": 0.15433333333333332,
-      "missed_by_pairwise": 0.018
+      "rate_pairwise": 0.168875,
+      "rate_exact": 0.151375,
+      "missed_by_pairwise": 0.0175
     },
     {
       "n": 9,
       "A_max_over_A_min": 1.5,
       "A_min_over_sigma": 1.5,
-      "rate_pairwise": 0.48,
-      "rate_exact": 0.45266666666666666,
-      "missed_by_pairwise": 0.027333333333333334
+      "rate_pairwise": 0.475125,
+      "rate_exact": 0.45025,
+      "missed_by_pairwise": 0.024875
     },
     {
       "n": 9,
       "A_max_over_A_min": 2.0,
       "A_min_over_sigma": 1.5,
-      "rate_pairwise": 0.6616666666666666,
-      "rate_exact": 0.6426666666666667,
-      "missed_by_pairwise": 0.019
+      "rate_pairwise": 0.663,
+      "rate_exact": 0.645875,
+      "missed_by_pairwise": 0.017125
     },
     {
       "n": 9,
       "A_max_over_A_min": 3.0,
       "A_min_over_sigma": 1.5,
-      "rate_pairwise": 0.8083333333333333,
-      "rate_exact": 0.8003333333333333,
-      "missed_by_pairwise": 0.008
+      "rate_pairwise": 0.81375,
+      "rate_exact": 0.8065,
+      "missed_by_pairwise": 0.00725
     },
     {
       "n": 9,
       "A_max_over_A_min": 5.0,
       "A_min_over_sigma": 1.5,
-      "rate_pairwise": 0.881,
-      "rate_exact": 0.8776666666666667,
-      "missed_by_pairwise": 0.0033333333333333335
+      "rate_pairwise": 0.890125,
+      "rate_exact": 0.8875,
+      "missed_by_pairwise": 0.002625
     },
     {
       "n": 9,
       "A_max_over_A_min": 10.0,
       "A_min_over_sigma": 1.5,
-      "rate_pairwise": 0.94,
-      "rate_exact": 0.939,
-      "missed_by_pairwise": 0.001
+      "rate_pairwise": 0.94225,
+      "rate_exact": 0.9415,
+      "missed_by_pairwise": 0.00075
     },
     {
       "n": 9,
       "A_max_over_A_min": 20.0,
       "A_min_over_sigma": 1.5,
-      "rate_pairwise": 0.966,
-      "rate_exact": 0.966,
-      "missed_by_pairwise": 0.0
+      "rate_pairwise": 0.966625,
+      "rate_exact": 0.9665,
+      "missed_by_pairwise": 0.000125
     }
   ],
   "round_trip": [

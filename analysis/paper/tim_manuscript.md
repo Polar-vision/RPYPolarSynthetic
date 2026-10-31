@@ -1,8 +1,8 @@
 # A Decision Rule Without an Operating Characteristic: The Pairwise Sum in Multi-Channel Boresight Alignment
 
-**BYLINE: Author names, affiliations, e-mail and ORCID to be completed at submission — all authors' ORCID iDs are mandatory for this journal**
+**BYLINE: Zhengkang Zuo**
 
-Manuscript received 31 October 2026. This work received no external funding. The author declares no conflict of interest. Code and derived data are listed under *Data and Code Availability*.
+Manuscript received 31 October 2026. This work received no external funding. The author declares no conflict of interest. Zhengkang Zuo is with the Polar-vision Laboratory, College of Geoscience and Surveying Engineering, Taiyuan University of Technology, Taiyuan, China (e-mail: zuozhengkang@tyut.edu.cn). Code and derived data are listed under *Data and Code Availability*.
 
 ## Abstract
 
@@ -255,20 +255,20 @@ This is the most persuasive table in the paper and the most uncomfortable one. B
 
 ### C. Channel Count and Allocation-to-Spread Ratio
 
-Section V-E is one slice through a three-dimensional regime. This section maps it, using equal allocations so that $\rho$ of Proposition 3 applies without confounding. Share of the design box on which the pairwise rule accepts and no common point exists, in percent, three thousand draws per cell, Gaussian deviations with per-axis $\sigma$:
+Section V-E is one slice through a three-dimensional regime. This section maps it, using equal allocations so that $\rho$ of Proposition 3 applies without confounding. Share of the design box on which the pairwise rule accepts and no common point exists, in percent, eight thousand draws per cell, Gaussian deviations with per-axis $\sigma$:
 
-*TABLE IV — REGIME MAP. MISSED SHARE OF THE DESIGN BOX, PERCENT, 3000 DRAWS PER CELL*
+*TABLE IV — REGIME MAP. MISSED SHARE OF THE DESIGN BOX, PERCENT, 8000 DRAWS PER CELL*
 
 | $n$ \ $A/\sigma$ | 1.0 | 1.2 | 1.5 | 1.8 | 2.0 | 2.4 | 3.0 |
 |---|---|---|---|---|---|---|---|
-| 3 | 0.50 | 0.60 | 0.53 | 0.30 | 0.07 | 0.00 | 0.00 |
-| 4 | 1.10 | 1.43 | 1.33 | 0.83 | 0.57 | 0.07 | 0.00 |
-| 5 | 0.60 | 1.63 | 2.07 | 0.70 | 0.73 | 0.17 | 0.00 |
-| 9 | 0.00 | 0.43 | 1.60 | 2.87 | 2.37 | 0.57 | 0.03 |
+| 3 | 0.69 | 0.80 | 0.40 | 0.31 | 0.06 | 0.00 | 0.00 |
+| 4 | 0.83 | 1.31 | 1.16 | 0.69 | 0.40 | 0.04 | 0.00 |
+| 5 | 0.61 | 1.34 | 1.60 | 0.86 | 0.69 | 0.14 | 0.00 |
+| 9 | 0.05 | 0.47 | 1.90 | 2.61 | 2.17 | 0.55 | 0.04 |
 
-Monte Carlo standard error is about $0.15$ percentage points, so the table resolves the order of magnitude of each cell and not the differences within a row: the peak position is meaningful to about one grid step, and the non-monotonicity at $n=5$ between $1.8$ and $2.0$ is not. Three features are robust. The peak sits at $A/\sigma\approx1.2$–$1.8$ — allocations of one to two standard deviations, designs that have been squeezed rather than designs that are comfortable. It grows with channel count but saturates: a factor $1.4$ from $n=5$ to $n=9$, not the factor $1.8$ a "more channels, more failure" intuition would suggest, because the band of (2) has a fixed width $0.268A$ in $d$ and extra channels move the population through it rather than widening it. And it is gone by $A/\sigma=3$: at the convention the replayed specification declares, the residual is $0.03\%$ at nine channels and zero below five.
+Monte Carlo standard error is about $0.09$ percentage points at these rates, so the table resolves the order of magnitude of each cell and not the differences within a row: the peak position is meaningful to about one grid step, and the non-monotonicity at $n=5$ between $1.5$ and $1.8$ is not. Three features are robust. The peak sits at $A/\sigma\approx1.2$–$1.8$ — allocations of one to two standard deviations, designs that have been squeezed rather than designs that are comfortable. It grows with channel count but saturates: a factor $1.6$ from $n=5$ to $n=9$, not the factor $1.8$ a "more channels, more failure" intuition would suggest, because the band of (2) has a fixed width $0.268A$ in $d$ and extra channels move the population through it rather than widening it. And it is gone by $A/\sigma=3$: at the convention the replayed specification declares, the residual is $0.04\%$ at nine channels and zero below five.
 
-The zero in the $n=9$, $A/\sigma=1$ cell is not a discrepancy but a ceiling effect: at one standard deviation the pairwise rule itself accepts only $0.7\%$ of builds, so there is almost no acceptance region in which to disagree.
+The zero in the $n=9$, $A/\sigma=1$ cell is not a discrepancy but a ceiling effect: at one standard deviation the pairwise rule itself accepts only $0.5\%$ of builds, so there is almost no acceptance region in which to disagree.
 
 ### D. Allocation Heterogeneity
 
@@ -278,9 +278,9 @@ Nine channels at $A_{\min}=1.5\sigma$, allocations spaced geometrically up to $A
 
 | $A_{\max}/A_{\min}$ | 1.0 | 1.5 | 2.0 | 3.0 | 5.0 | 10 | 20 |
 |---|---|---|---|---|---|---|---|
-| missed by the table | 1.80 | 2.73 | 1.90 | 0.80 | 0.33 | 0.10 | 0.00 |
+| missed by the table | 1.75 | 2.49 | 1.71 | 0.73 | 0.26 | 0.07 | 0.01 |
 
-Heterogeneity is not neutral, and it is not monotone either, which is worth stating because the intuitive account is only half right. A channel with a slack allocation absorbs the common component of the spread for the others — the shim can be pushed toward it — so $\rho$ collapses toward $1$ as allocations become unequal. But spreading the allocations at a *fixed* tightest value also enlarges the acceptance region: the pairwise acceptance rate rises from $17\%$ to $48\%$ between ratios $1$ and $1.5$ in the same sweep, and the disagreement can only live inside an acceptance region. The two effects compete, and the measured result is a hump: $1.8\%$ at equal allocations, $2.7\%$ at ratio $1.5$, then $1.9\%$, $0.8\%$, $0.33\%$, $0.10\%$ and $0.00\%$ at ratios $2$, $3$, $5$, $10$ and $20$. Dilution wins decisively only beyond a factor of five, and the replayed deck's own ratio of $2.5$ ($300''$ to $750''$) sits near the top of the hump rather than past it.
+Heterogeneity is not neutral, and it is not monotone either, which is worth stating because the intuitive account is only half right. A channel with a slack allocation absorbs the common component of the spread for the others — the shim can be pushed toward it — so $\rho$ collapses toward $1$ as allocations become unequal. But spreading the allocations at a *fixed* tightest value also enlarges the acceptance region: the pairwise acceptance rate rises from $17\%$ to $48\%$ between ratios $1$ and $1.5$ in the same sweep, and the disagreement can only live inside an acceptance region. The two effects compete, and the measured result is a hump: $1.75\%$ at equal allocations, $2.49\%$ at ratio $1.5$, then $1.71\%$, $0.73\%$, $0.26\%$, $0.07\%$ and $0.01\%$ at ratios $2$, $3$, $5$, $10$ and $20$. Dilution wins decisively only beyond a factor of five, and the replayed deck's own ratio of $2.5$ ($300''$ to $750''$) sits near the top of the hump rather than past it.
 
 ![Figure 3](../figures/ress_fig1.png)
 
@@ -288,7 +288,7 @@ Heterogeneity is not neutral, and it is not monotone either, which is worth stat
 
 ### E. What the Sweeps Bound
 
-The two sweeps place the number measured in Section V-E without claiming to predict it. The nine deck instruments span an allocation ratio of $2.5$ and, at $T/A_{\min}=1.25$, a missed share of $3.3\%$; the heterogeneous cells of Section VI-D sit in the range $0.8$–$2.7\%$. The two sweeps use different parametrisations — spread relative to the tightest allocation under a worst-case draw, against allocation relative to $\sigma$ under a Gaussian one — so no point prediction should be read across them; what transfers is the shape. The effect needs few channels, allocations of comparable size at one to two standard deviations, and it is bounded above by a few percent of the design box in every configuration tested. That bound, not any single cell, is the paper's quantitative claim.
+The two sweeps place the number measured in Section V-E without claiming to predict it. The nine deck instruments span an allocation ratio of $2.5$ and, at $T/A_{\min}=1.25$, a missed share of $3.3\%$; the heterogeneous cells of Section VI-D sit in the range $0.01$–$2.5\%$. The two sweeps use different parametrisations — spread relative to the tightest allocation under a worst-case draw, against allocation relative to $\sigma$ under a Gaussian one — so no point prediction should be read across them; what transfers is the shape. The effect needs few channels, allocations of comparable size at one to two standard deviations, and it is bounded above by a few percent of the design box in every configuration tested. That bound, not any single cell, is the paper's quantitative claim.
 
 ![Figure 4](../figures/paper_fig3.png)
 
@@ -300,9 +300,9 @@ Corollary 2 explains the silence of the record; three features of this class of 
 
 **The clauses are pairwise.** Where a specification writes a sum it writes it for two instruments — two cameras, one instrument inside another's field of view — and Proposition 2 makes the addition exact there. The configuration that would expose the defect, three channels sharing one orientation, is the one the document does not contain. The replay found exactly one pairwise sum in the replayed document, and it is correct to the arc-second.
 
-**The confidence convention is generous.** Allocations at $3\sigma$ against an as-built spread of order $1\sigma$ leave a factor of three between the two sides of the inequality. The disagreement needs the allocation to be comparable to the spread, and the convention forbids that by construction: at $A/\sigma=3$ it is $0.03\%$ at nine channels and zero below five.
+**The confidence convention is generous.** Allocations at $3\sigma$ against an as-built spread of order $1\sigma$ leave a factor of three between the two sides of the inequality. The disagreement needs the allocation to be comparable to the spread, and the convention forbids that by construction: at $A/\sigma=3$ it is $0.04\%$ at nine channels and zero below five.
 
-**The allocations are heterogeneous, though this one is not decisive.** A slack channel absorbs the common component for the others, and at large ratios the disagreement disappears: $0.8\%$ at ratio $3$, $0.10\%$ at ratio $10$, zero at ratio $20$. But the deck's own ratio is $2.5$, which sits on the hump of Section VI-D rather than past it, and the document's ratio of $20.8$ counts the laser-ranging telescope, which is not on the deck. So this feature does not account for the null: the $3\sigma$ convention does.
+**The allocations are heterogeneous, though this one is not decisive.** A slack channel absorbs the common component for the others, and at large ratios the disagreement disappears: $0.73\%$ at ratio $3$, $0.07\%$ at ratio $10$, $0.01\%$ at ratio $20$. But the deck's own ratio is $2.5$, which sits on the hump of Section VI-D rather than past it, and the document's ratio of $20.8$ counts the laser-ranging telescope, which is not on the deck. So this feature does not account for the null: the $3\sigma$ convention does.
 
 ### A. The Reachable Domain of a Build Record
 
@@ -362,8 +362,8 @@ A programme flies one to three units. The conclusion is not that the defect is r
 
 The three features of Section VII are properties of the table, not of the build, so they can be checked before any measurement is made. The sweeps of Section VI rank them:
 
-1. **Is the tightest allocation at least $2.5\sigma$?** The dominant knob, decisive on its own: at $A_{\min}/\sigma=3$ the missed share is $0.03\%$ at nine channels and zero below five, whatever the allocation pattern; at $1.5\sigma$ it is $1$–$3\%$. A *yes* here bounds the answer to a fraction of a percent before any geometry is computed.
-2. **How many channels share the interface?** Exposure rises with channel count — a peak of $0.6\%$ at three, $1.4\%$ at four, $2.1\%$ at five, $2.9\%$ at nine — so a large family is the unfavourable direction, contrary to what the extremal-configuration argument of Section III-G might suggest. The factor available is about five and it saturates.
+1. **Is the tightest allocation at least $2.5\sigma$?** The dominant knob, decisive on its own: at $A_{\min}/\sigma=3$ the missed share is $0.04\%$ at nine channels and zero below five, whatever the allocation pattern; at $1.5\sigma$ it is $0.4$–$1.9\%$. A *yes* here bounds the answer to a fraction of a percent before any geometry is computed.
+2. **How many channels share the interface?** Exposure rises with channel count — a peak of $0.80\%$ at three, $1.31\%$ at four, $1.60\%$ at five, $2.61\%$ at nine — so a large family is the unfavourable direction, contrary to what the extremal-configuration argument of Section III-G might suggest. The factor available is about three and it saturates.
 3. **How heterogeneous are the allocations?** Dilution is real but arrives late and is not monotone: it protects beyond a ratio of about five, and between one and two it can make things slightly worse (Section VI-D). A *no* here is a weak all-clear.
 
 Applied to the replayed specification: $3\sigma$ on the tightest channel (question 1 passed, and passed decisively), ten channels (question 2 at its worst), a deck ratio of $2.5$ (question 3 not protective). The verdict is therefore *expect a fraction of a percent*, and that is what the measurement found: $0$ misses in $12000$ draws for the deck at the declared convention, a $95\%$ upper bound of $3.2\times10^{-4}$; $0.79\%$ for the same deck at $A/\sigma=2$.

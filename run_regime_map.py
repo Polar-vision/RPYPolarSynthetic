@@ -39,7 +39,7 @@ OUT.mkdir(exist_ok=True)
 
 
 def grid(n_list=(3, 4, 5, 9), ratio_list=(0.8, 1.0, 1.2, 1.5, 1.8, 2.0, 2.4, 3.0),
-         n_draw: int = 3000, seed: int = 31) -> list[dict]:
+         n_draw: int = 8000, seed: int = 31) -> list[dict]:
     rows = []
     for n in n_list:
         A = np.full(n, 100.0)
@@ -63,7 +63,7 @@ def grid(n_list=(3, 4, 5, 9), ratio_list=(0.8, 1.0, 1.2, 1.5, 1.8, 2.0, 2.4, 3.0
 
 def heterogeneity(n: int = 9, ratio_list=(1.0, 1.5, 2.0, 3.0, 5.0, 10.0, 20.0),
                   A_min: float = 150.0, sigma: float = 100.0,
-                  n_draw: int = 3000, seed: int = 71) -> list[dict]:
+                  n_draw: int = 8000, seed: int = 71) -> list[dict]:
     """Nine allocations, geometrically spaced, tightest one held fixed."""
     rows = []
     for ratio in ratio_list:
