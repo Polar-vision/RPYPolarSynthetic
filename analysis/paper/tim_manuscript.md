@@ -19,8 +19,7 @@ Multi-channel payloads are allocated tolerances one channel at a time but checke
 | $A_i$ | allocation of channel $i$ (half-cone, per axis) | $r^{\star}$ | radius of the smallest disk containing all $d_i$ |
 | $A$ | common allocation when all channels are equal | $\rho$ | ratio $r^{\star}/(d/2)$ |
 | $x\in\mathbb{R}^2$ | displacement supplied by one shim | $T$, $\sigma$ | spread of a uniform draw; per-axis standard deviation |
-| $D_i$, $C$ | disk of radius $A_i$ about $d_i$; conforming set of $d$ | DC, SP | detection coverage; false-alarm probability |
-| $p$ | miss rate of the pairwise rule | $\Delta c$, $c_a$ | cost of a late fix; cost of one analysis |
+| $p$ | miss rate of the pairwise rule | DC, SP | detection coverage; false-alarm probability |
 
 ## I. Introduction
 
@@ -34,11 +33,13 @@ The distinction that motivates the paper is one that conformance-assessment prac
 
 ### B. Relation to Prior Work
 
-*1) Feasibility of a family of angular constraints.* The object is the intersection of a family of disks in two dimensions, and it is well understood. The smallest enclosing circle is determined by two or three of the points; linear-time algorithms exist [7], as does the randomised incremental construction most implementations use [5], and the LP-type framework that explains why both work [6]. The intersection is convex, so feasibility is a convex feasibility problem and can be written as a second-order cone program [8], [9]. What is not in that literature is the question asked here: not whether a family is feasible, but what a *scalar summary* of a tolerance table can decide, and when the answer it gives can be tested against a build.
+*1) Estimating the deviations.* The orientation parameters themselves are the object of a substantial calibration literature. LROC's cameras were calibrated before launch and again on orbit [5], and the relative boresight of its two narrow-angle cameras has been estimated from image correspondences [6]; reviews and recent bundle adjustments likewise treat installation angles as explicit calibration parameters [7], [8]. Spacecraft alignment filters supply the companion observability analysis [9], [10]. These methods estimate the deviations; the present paper begins after that estimation and asks how a tolerance table converts the estimate into a verdict.
 
-*2) Alignment budgeting as practised.* An angular alignment budget is written twice: as a requirement on a relative orientation, and as an allocation to each contributor — alignment cube, bracket, interface, reference transfer — usually a half-cone per axis at a declared confidence, combined by the classical conventions of tolerance analysis, arithmetic (worst case) or root-sum-square. Dimensional and geometrical tolerancing standards [10], [11] fix the language for the mechanical contributors but deliberately do not prescribe how a multi-instrument budget is combined; that is left to the programme. In practice the combination is pairwise, for a reason as much organisational as technical: a pairwise requirement is a requirement between two responsible parties, it can be written into two interface control documents, and it can be verified by pointing one instrument at another. A three-way requirement has no natural owner. The result is a table whose rows are pairs, and a review whose question is "is every row inside its sum?" That question has a precise answer, and it is the subject of this paper.
+*2) Feasibility of a family of angular constraints.* The object is the intersection of a family of disks in two dimensions, and it is well understood. The smallest enclosing circle is determined by two or three of the points; linear-time algorithms exist [11], as does the randomised incremental construction most implementations use [12], and the LP-type framework that explains why both work [13]. The intersection is convex, so feasibility is a convex feasibility problem and can be written as a second-order cone program [14], [15]. What is not in that literature is the question asked here: not whether a family is feasible, but what a *scalar summary* of a tolerance table can decide, and when the answer it gives can be tested against a build.
 
-*3) Decision rules and their operating characteristics.* Conformance assessment formalises the distinction this paper turns on. A decision rule maps a measured value to accept/reject; its performance is the probability of acceptance as a function of the true value, and measurement uncertainty is handled by a guard band or a stated risk [3]. The framework presupposes that the rule *has* such a curve and that the curve is not degenerate; acceptance sampling made the same presupposition explicit a century earlier [4]. A rule evaluated only on items that have already passed another rule has no operating characteristic of its own: its curve is identically zero on the population it is applied to. That is the situation of the pairwise sum, and it is not a criticism of the engineers who use it — it is a statement about which question the rule can answer.
+*3) Alignment budgeting as practised.* An angular alignment budget is written twice: as a requirement on a relative orientation, and as an allocation to each contributor — alignment cube, bracket, interface, reference transfer — usually a half-cone per axis at a declared confidence, combined by the classical conventions of tolerance analysis, arithmetic (worst case) or root-sum-square [16], [17]. Dimensional and geometrical tolerancing standards [18], [19] fix the language for the mechanical contributors but deliberately do not prescribe how a multi-instrument budget is combined; that is left to the programme. In practice the combination is pairwise, for a reason as much organisational as technical: a pairwise requirement is a requirement between two responsible parties, it can be written into two interface control documents, and it can be verified by pointing one instrument at another. A three-way requirement has no natural owner. The result is a table whose rows are pairs, and a review whose question is "is every row inside its sum?" That question has a precise answer, and it is the subject of this paper.
+
+*4) Decision rules and their operating characteristics.* Conformance assessment formalises the distinction this paper turns on. A decision rule maps a measured value to accept/reject; its performance is the probability of acceptance as a function of the true value, and measurement uncertainty is handled by a guard band or a stated risk [3]. Later treatments make the consumer and producer risks, and the industrial guard-band conventions, explicit [20], [21]. The framework presupposes that the rule *has* such a curve and that the curve is not degenerate; acceptance sampling made the same presupposition explicit a century earlier [4]. A rule evaluated only on items that have already passed another rule has no operating characteristic of its own: its curve is identically zero on the population it is applied to. That is the situation of the pairwise sum, and it is not a criticism of the engineers who use it — it is a statement about which question the rule can answer.
 
 ### C. Contributions
 
@@ -167,7 +168,7 @@ This is the sharpest statement in the paper, and it changes the practical questi
 
 ### G. Ring Families and Scale Invariance
 
-For $n$ equally spaced channels on a circle, $\rho_n=1/\sin(\lfloor n/2\rfloor\pi/n)$ (Appendix B): exactly $1$ for even $n$, where an antipodal pair pins the disk, and $1/\cos(\pi/2n)$ for odd $n$, peaking at $n=3$ and decaying as $1+\pi^2/(8n^2)$. The values for $n=3,5,7,9$ are $1.1547$, $1.0515$, $1.0257$, $1.0154$.
+For $n$ equally spaced channels on a circle of radius $R$, the worst separation is the chord $d=2R\sin(\lfloor n/2\rfloor\pi/n)$, hence $\rho_n=1/\sin(\lfloor n/2\rfloor\pi/n)$: exactly $1$ for even $n$, where an antipodal pair pins the disk, and $1/\cos(\pi/2n)$ for odd $n$, peaking at $n=3$ and decaying as $1+\pi^2/(8n^2)$. The values for $n=3,5,7,9$ are $1.1547$, $1.0515$, $1.0257$, $1.0154$.
 
 That sequence is easy to over-read: for a *given* worst separation $d$, no configuration of any number of channels is more pessimistic than an equilateral triple of the same diameter, and adding channels to an evenly spread ring brings $\rho$ toward $1$. This concerns the extremal configuration at fixed spread, not exposure as $n$ grows; Section VI-C measures the other direction. Proposition 3 bounds how wrong a single verdict can be, the sweep bounds how often it is wrong. And because both thresholds in (2) are proportional to $A$, the *fraction* is independent of the tolerance magnitude: a payload with $0.5^\circ$ allocations and one with $30^\circ$ allocations have identical disagreement geometry, and only the absolute width changes. The failure is neither a small-angle artefact nor a numerical one.
 
@@ -183,7 +184,7 @@ A third verdict — undecided — is needed when non-convex constraints such as 
 
 ### A. The Allocation Table and the Missing Column
 
-`431-SPEC-000113` Rev A (NASA/GSFC, 2007) states, per instrument, an alignment allocation relative to the spacecraft reference, as a half-cone in arc-seconds per axis, at a declared confidence ("$3\sigma$ or worst case") [12]. Ten channels are specified: five at $300''$ (the two LROC narrow-angle cameras, the wide-angle camera, LOLA and LAMP), three at $500''$ (Diviner, CRaTER, LEND), Mini-RF at $750''$, and the laser-ranging telescope at $36''$.
+`431-SPEC-000113` Rev A (NASA/GSFC, 2007) states, per instrument, an alignment allocation relative to the spacecraft reference, as a half-cone in arc-seconds per axis, at a declared confidence ("$3\sigma$ or worst case") [22]. Ten channels are specified: five at $300''$ (the two LROC narrow-angle cameras, the wide-angle camera, LOLA and LAMP), three at $500''$ (Diviner, CRaTER, LEND), Mini-RF at $750''$, and the laser-ranging telescope at $36''$.
 
 Three of the four columns a full replay needs are public: the nominal geometry, the allocation, and the reference frame. The fourth — the as-built deviation of each channel — is not, and will not be. The as-built spread $T$ is therefore carried as a free parameter and swept, with the criteria compared inside the sweep rather than against an asserted value. That is the only honest use of a public document here: it constrains the allocations, not the build.
 
@@ -347,17 +348,13 @@ $$
 |---|---|---|---|---|---|
 | $N$ | 48 | 80 | 160 | 536 | 1609 |
 
-A programme flies one to three units. The conclusion is not that the defect is rare; it is that the defect is unobservable within a programme's lifetime, at every value of $p$ the sweeps produce. This is why the published record contains no rate for it, and it is the argument for computing the rate rather than waiting for it (Fig. 5(c)).
+A programme flies one to three units. The conclusion is not that the defect is rare; it is that the defect is unobservable within a programme's lifetime, at every value of $p$ the sweeps produce. This is why the published record contains no rate for it, and it is the argument for computing the rate rather than waiting for it (Table VIII). The corresponding curves are given as Fig. S-1 in the Supplementary Material.
 
 ### C. What Is Invariant and What Is Not
 
 **Common-mode bias is removable, provably.** Replacing $d_i$ by $d_i+b$ for a common $b$ leaves both the feasibility verdict and the pairwise verdict unchanged — $0$ of $600$ draws changed — because both depend on differences only; the per-channel verdict changed on $78$ of $600$. Bench, fixture and reference-cube bias can therefore be deleted from the analysis wholesale, and the per-channel rule is the only one of the three that charges a build for an error a shim would absorb.
 
 **The distribution cannot be assumed away.** At the same $\sigma$, $n=9$ and $A/\sigma=1.5$, Gaussian, uniform-disk and $t_3$ draws give miss rates of $1.9\%$, $2.7\%$ and $1.2\%$ — a factor of $2.3$. No as-built data exist to choose among them. The response is to report the band and not the probability: the $15.47\%$ of Corollary 3 is geometric, exact and distribution-free, while the $3.3\%$ of Table II is a share of a design box under a stated convention. A referee is entitled to ask whether the percentage depends on the Gaussian assumption; it does, which is why it is offered as an order of magnitude and the constant is offered as a result.
-
-![Figure 5](../figures/ress_fig2.png)
-
-*Fig. 5. The record. (a) Share of the $3\sigma$ design box that a build record can occupy, against the tightest allocation in standard deviations, for three channel counts. (b) Share of per-channel-cleared draws that cannot be aligned, i.e. of waivers that a shim cannot rescue. (c) Units needed to observe one miss at $80\%$ confidence, against the miss rate; the shaded band is the range a programme can fly.*
 
 ## VIII. A Screen, and the Limits of the Claim
 
@@ -375,11 +372,9 @@ A screen that predicts its own null result is a weak test of the screen, and thi
 
 ### B. Limits
 
-**No as-built column.** Every number in Sections V-E and VI is a function of a swept parameter, not of a measurement. The sweep design — uniform in a disk for the worst-case convention, Gaussian otherwise — is a convention, and the percentages are shares of a design box, not frequencies in a population of builds. The distinction between "$13.4\%$ of the tolerance span" and "$13.4\%$ of designs" is the one this paper exists to keep straight, and it applies to its own measurements.
+**No as-built column, and a static model.** Every number in Sections V-E and VI is a function of a swept parameter, not of a measurement. The sweep design — uniform in a disk for the worst-case convention, Gaussian otherwise — is a convention, and the percentages are shares of a design box, not frequencies in a population of builds. Thermal gradients, preload, cure shrinkage and flexibility are also outside the model, so the method belongs upstream in allocation and rework decisions, not in verification of a finished assembly. The distinction between "$13.4\%$ of the tolerance span" and "$13.4\%$ of designs" applies to its own measurements too.
 
 **One interface is counterfactual for this document.** The specification replayed in Section V aligns each instrument separately. The check against its arithmetic (Section V-B) is real, but it is not evidence that the flight article used a shared interface, and the partition recovered in Section V-D is a consistency check with the document's mechanical description, not a discovery about the spacecraft.
-
-**The model is geometric and static.** Thermal gradients, preload, cure shrinkage and flexibility are outside it, and several produce relative motions of the same order as the allocations. A tool of this kind belongs upstream of those effects, in the allocation and rework decisions, not downstream in the verification of a finished assembly.
 
 **No failure is claimed.** The paper does not assert that any programme has suffered a misalignment attributable to this rule. The claim is narrower and harder to dismiss: the rule's guarantee in design is weaker than its use by a constant that is known, attained and scale-free, and in conformity assessment its guarantee is empty, so the empirical record cannot adjudicate it.
 
@@ -410,10 +405,6 @@ The rule is not wrong. In design it is optimistic by a constant that can be carr
 
 Let $I=\bigcap_i D_i\neq\emptyset$ and $y\in I$. If some $D_j$ contains all the others then $d_j\in I$ is a candidate. Otherwise the boundary of $I$ meets $\partial D_i$ for every non-redundant $i$; moving from $y$ along a ray to $\partial I$ reaches a point where some constraint is tight, and that point either is a vertex or lies on a single circle, from which sliding along the circle reaches one. Hence a witness exists among the $n$ centres and the $2\binom{n}{2}$ crossings, and testing the $O(n^2)$ candidates against $n$ constraints is $O(n^3)$ arithmetic.
 
-## Appendix B: Ring Families
-
-Let $n$ points be equally spaced on a circle of radius $R$. The minimal enclosing disk is that circle, so $r^{\star}=R$; the worst pairwise separation is the chord subtended by $\lfloor n/2\rfloor$ steps, $d=2R\sin(\lfloor n/2\rfloor\pi/n)$; hence $\rho_n=R/(d/2)=1/\sin(\lfloor n/2\rfloor\pi/n)$. For even $n$ the index is $\pi/2$ and $\rho_n=1$, an antipodal pair pinning the disk. For odd $n$ it is $\pi/2-\pi/(2n)$, so $\rho_n=1/\cos(\pi/2n)=1+\pi^2/(8n^2)+O(n^{-4})$, maximised at $n=3$ where it equals $2/\sqrt{3}$ — the equality case of Proposition 3.
-
 ## Acknowledgment
 
 The author thanks the reviewers of an earlier version for pressing the distinction between a bound on a verdict and a rate in a population, which is now Section VII-B.
@@ -429,24 +420,44 @@ The author thanks the reviewers of an earlier version for pressing the distincti
 
 [1] E. Helly, "Über Mengen konvexer Körper mit gemeinschaftlichen Punkten," *Jahresber. Dtsch. Math.-Ver.*, vol. 32, pp. 175–176, 1923.
 
-[2] H. Jung, "Ueber die kleinste Kugel, die eine räumliche Figur einschliesst," *J. Reine Angew. Math.*, vol. 123, pp. 241–257, 1901.
+[2] H. Jung, "Ueber die kleinste Kugel, die eine räumliche Figur einschliesst," *J. Reine Angew. Math.*, vol. 123, pp. 241–257, 1901, doi: 10.1515/crll.1901.123.241.
 
-[3] Joint Committee for Guides in Metrology, *Evaluation of Measurement Data—The Role of Measurement Uncertainty in Conformity Assessment*, JCGM 106:2012, 2012.
+[3] Joint Committee for Guides in Metrology, *Evaluation of Measurement Data—The Role of Measurement Uncertainty in Conformity Assessment*, JCGM 106:2012, 2012, doi: 10.59161/JCGM106-2012.
 
-[4] H. F. Dodge and H. G. Romig, "A method of sampling inspection," *Bell Syst. Tech. J.*, vol. 8, no. 4, pp. 613–631, 1929.
+[4] H. F. Dodge and H. G. Romig, "A method of sampling inspection," *Bell Syst. Tech. J.*, vol. 8, no. 4, pp. 613–631, 1929, doi: 10.1002/j.1538-7305.1929.tb01240.x.
 
-[5] E. Welzl, "Smallest enclosing disks (balls and ellipsoids)," in *New Results and New Trends in Computer Science*, vol. 555. Berlin, Germany: Springer, 1991, pp. 359–370.
+[5] E. J. Speyerer *et al*., "Pre-flight and on-orbit geometric calibration of the Lunar Reconnaissance Orbiter Camera," *Space Sci. Rev.*, vol. 200, no. 1–4, pp. 357–392, 2016, doi: 10.1007/s11214-014-0073-3.
 
-[6] K. L. Clarkson, "Las Vegas algorithms for linear and integer programming when the dimension is small," *J. ACM*, vol. 42, no. 2, pp. 488–499, 1995.
+[6] B. Wu and W. C. Liu, "Calibration of boresight offset of LROC NAC imagery for precision lunar topographic mapping," *ISPRS J. Photogramm. Remote Sens.*, vol. 128, pp. 372–387, 2017, doi: 10.1016/j.isprsjprs.2017.04.012.
 
-[7] N. Megiddo, "Linear-time algorithms for linear programming in $\mathbb{R}^3$ and related problems," *SIAM J. Comput.*, vol. 12, no. 4, pp. 759–776, 1983.
+[7] D. Poli and T. Toutin, "Review of developments in geometric modelling for high resolution satellite pushbroom sensors," *Photogramm. Rec.*, vol. 27, no. 137, pp. 58–73, 2012, doi: 10.1111/j.1477-9730.2011.00665.x.
 
-[8] R. T. Rockafellar, *Convex Analysis*. Princeton, NJ, USA: Princeton Univ. Press, 1970.
+[8] X. Zhang, H. Pan, S. Zhou, and X. Zhu, "Self-calibration strip bundle adjustment of high-resolution satellite imagery," *Remote Sens.*, vol. 16, no. 12, Art no. 2196, 2024, doi: 10.3390/rs16122196.
 
-[9] Y. Nesterov and A. Nemirovski, *Interior-Point Polynomial Algorithms in Convex Programming*. Philadelphia, PA, USA: SIAM, 1994.
+[9] M. E. Pittelkau, "Kalman filtering for spacecraft system alignment calibration," *J. Guid. Control Dyn.*, vol. 24, no. 6, pp. 1187–1195, 2001, doi: 10.2514/2.4834.
 
-[10] *Dimensioning and Tolerancing*, ASME Y14.5-2018, Amer. Soc. Mech. Eng., New York, NY, USA, 2018.
+[10] M. E. Pittelkau, "Everything is relative in spacecraft system alignment calibration," *J. Spacecr. Rockets*, vol. 39, no. 3, pp. 460–466, 2002, doi: 10.2514/2.3830.
 
-[11] *Geometrical Product Specifications (GPS)—Geometrical Tolerancing—Tolerances of Form, Orientation, Location and Run-Out*, ISO 1101:2017, Int. Org. Standardization, Geneva, Switzerland, 2017.
+[11] N. Megiddo, "Linear-time algorithms for linear programming in $\mathbb{R}^3$ and related problems," *SIAM J. Comput.*, vol. 12, no. 4, pp. 759–776, 1983, doi: 10.1137/0212052.
 
-[12] NASA Goddard Space Flight Center, *LRO Pointing and Alignment Specification*, 431-SPEC-000113 Rev. A, Apr. 6, 2007.
+[12] E. Welzl, "Smallest enclosing disks (balls and ellipsoids)," in *New Results and New Trends in Computer Science*, vol. 555. Berlin, Germany: Springer, 1991, pp. 359–370, doi: 10.1007/BFb0038202.
+
+[13] K. L. Clarkson, "Las Vegas algorithms for linear and integer programming when the dimension is small," *J. ACM*, vol. 42, no. 2, pp. 488–499, 1995, doi: 10.1145/201019.201036.
+
+[14] R. T. Rockafellar, *Convex Analysis*. Princeton, NJ, USA: Princeton Univ. Press, 1970.
+
+[15] Y. Nesterov and A. Nemirovski, *Interior-Point Polynomial Algorithms in Convex Programming*. Philadelphia, PA, USA: SIAM, 1994.
+
+[16] K. W. Chase and A. R. Parkinson, "A survey of research in the application of tolerance analysis to the design of mechanical assemblies," *Res. Eng. Des.*, vol. 3, no. 1, pp. 23–37, 1991, doi: 10.1007/BF01580066.
+
+[17] S. D. Nigam and J. U. Turner, "Review of statistical approaches to tolerance analysis," *Comput.-Aided Des.*, vol. 27, no. 1, pp. 6–15, 1995, doi: 10.1016/0010-4485(95)90748-5.
+
+[18] *Dimensioning and Tolerancing*, ASME Y14.5-2018, Amer. Soc. Mech. Eng., New York, NY, USA, 2018.
+
+[19] *Geometrical Product Specifications (GPS)—Geometrical Tolerancing—Tolerances of Form, Orientation, Location and Run-Out*, ISO 1101:2017, Int. Org. Standardization, Geneva, Switzerland, 2017.
+
+[20] L. R. Pendrill, "Using measurement uncertainty in decision-making and conformity assessment," *Metrologia*, vol. 51, no. 4, pp. S206–S218, 2014, doi: 10.1088/0026-1394/51/4/S206.
+
+[21] *Geometrical Product Specifications (GPS)—Inspection by Measurement of Workpieces and Measuring Equipment—Part 1: Decision Rules for Verifying Conformity or Nonconformity With Specifications*, ISO 14253-1:2017, Int. Org. Standardization, Geneva, Switzerland, 2017.
+
+[22] NASA Goddard Space Flight Center, *LRO Pointing and Alignment Specification*, 431-SPEC-000113 Rev. A, Apr. 6, 2007.
