@@ -2,7 +2,7 @@
 
 **BYLINE: Zhengkang Zuo**
 
-Manuscript received 31 October 2026. This work received no external funding. The author declares no conflict of interest. Zhengkang Zuo is with the Polar-vision Laboratory, College of Geoscience and Surveying Engineering, Taiyuan University of Technology, Taiyuan, China (e-mail: zuozhengkang@tyut.edu.cn). Code and derived data are listed under *Data and Code Availability*.
+Manuscript received 31 October 2026. This work was supported by the National Natural Science Foundation of China (grant no. T2600787) and the Natural Science Foundation of Shanxi Province (grant no. 202403021212106). The author declares no conflict of interest. Zhengkang Zuo is with the Polar-vision Laboratory, College of Geoscience and Surveying Engineering, Taiyuan University of Technology, Taiyuan, China (e-mail: zuozhengkang@tyut.edu.cn). Code and derived data are listed under *Data and Code Availability*.
 
 ## Abstract
 
