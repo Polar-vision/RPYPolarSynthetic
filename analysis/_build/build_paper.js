@@ -59,12 +59,19 @@ bodyHtml = bodyHtml.replace(/src="([^"]+)"/g, (m, p) => {
   return `src="${pathToFileURL(path.resolve(PAPER, p)).href}"`;
 });
 
+// References are set tighter than body text, as a journal would.
+const refIdx = bodyHtml.indexOf('<h2>References</h2>');
+if (refIdx > 0) {
+  bodyHtml = bodyHtml.slice(0, refIdx)
+    + '<div class="refs">' + bodyHtml.slice(refIdx) + '</div>';
+}
+
 const css = `
 @page { size: A4; margin: 20mm 21mm 18mm 21mm; }
 html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 body {
   font-family: "Times New Roman", Times, "Liberation Serif", serif;
-  font-size: 10.4pt; line-height: 1.485; color: #111; margin: 0;
+  font-size: 10.4pt; line-height: 1.45; color: #111; margin: 0;
   text-align: justify; -webkit-hyphens: auto; hyphens: auto;
 }
 h1 { font-size: 17pt; line-height: 1.28; font-weight: 700; margin: 0 0 4pt;
@@ -103,6 +110,7 @@ figure { margin: 9pt 0 11pt; break-inside: avoid; page-break-inside: avoid; }
 figure img { margin: 0 auto 3pt; }
 figcaption { font-size: 8.3pt; line-height: 1.4; text-align: left; color: #1a1a1a; }
 figcaption em { font-style: normal; }
+.refs p { font-size: 8.5pt; line-height: 1.30; margin: 0 0 2.2pt; text-align: left; }
 .katex { font-size: 1.0em; }
 .katex-display { margin: 7pt 0 8pt; break-inside: avoid; }
 .katex-display > .katex { font-size: 1.02em; }
