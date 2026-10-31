@@ -178,7 +178,7 @@ The output is *undecided*, with the gap between the readings quantified. This is
 
 ### 5.4 A partition recovered from the numbers
 
-Take an as-built spread $T=220''$ (uniform in a disk, the worst-case convention) for the ten channels. The nine instruments on the deck, treated as one interface, are feasible with $140.3''$ of slack. Add the laser-ranging telescope — allocated $36''$, six times tighter than anything else, and mounted six hundred millimetres away on a different bracket — and the family becomes infeasible, with a deficit of $34.1''$; the minimal infeasible subset is $\{$LAMP, laser-ranging telescope$\}$, and loosening a single allocation by $0.96''$ restores feasibility.
+Take an as-built spread $T=220''$ (uniform in a disk, the worst-case convention) for the ten channels. The nine instruments on the deck, treated as one interface, are feasible with at least $140.3''$ to spare. Add the laser-ranging telescope — allocated $36''$, six times tighter than anything else, and mounted six hundred millimetres away on a different bracket — and the family becomes infeasible: every allocation would have to grow by $15.4''$ before a common point exists; the minimal infeasible subset is $\{$LAMP, laser-ranging telescope$\}$, and loosening a single allocation by $0.96''$ restores feasibility.
 
 Section 12.0 of the specification states that the laser-ranging optic is mounted on the high-gain-antenna bracket, not on the instrument deck. The tool recovered the document's mechanical partitioning from ten numbers, without being told the partitioning. That is the practical content of the IIS: not a diagnostic about arithmetic, but a statement about structure, obtained from the same table a reviewer already has.
 
