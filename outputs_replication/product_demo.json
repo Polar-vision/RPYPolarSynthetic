@@ -1,0 +1,109 @@
+{
+ "payload": {
+  "r_star_deg": 0.8679483595654074,
+  "support": [
+   "SWIR",
+   "radiometer",
+   "coarse sun sensor"
+  ],
+  "min_spec_deg": 0.25,
+  "per_channel": [
+   {
+    "channel": "star tracker A",
+    "spec_deg": 0.25,
+    "deficit_deg": 0.6179483595654074,
+    "in_support": false,
+    "angle_at_x_star_deg": 0.0944991690172805
+   },
+   {
+    "channel": "star tracker B",
+    "spec_deg": 0.25,
+    "deficit_deg": 0.6179483595654074,
+    "in_support": false,
+    "angle_at_x_star_deg": 0.38950251253761925
+   },
+   {
+    "channel": "laser terminal",
+    "spec_deg": 0.25,
+    "deficit_deg": 0.6179483595654074,
+    "in_support": false,
+    "angle_at_x_star_deg": 0.41450307989443186
+   },
+   {
+    "channel": "imager",
+    "spec_deg": 0.6,
+    "deficit_deg": 0.2679483595654074,
+    "in_support": false,
+    "angle_at_x_star_deg": 0.829012771158599
+   },
+   {
+    "channel": "SWIR",
+    "spec_deg": 0.6,
+    "deficit_deg": 0.2679483595654074,
+    "in_support": true,
+    "angle_at_x_star_deg": 0.8679483595654074
+   },
+   {
+    "channel": "radiometer",
+    "spec_deg": 0.6,
+    "deficit_deg": 0.2679483595654074,
+    "in_support": true,
+    "angle_at_x_star_deg": 0.8679483595654074
+   },
+   {
+    "channel": "beacon",
+    "spec_deg": 0.6,
+    "deficit_deg": 0.2679483595654074,
+    "in_support": false,
+    "angle_at_x_star_deg": 0.7128075581034479
+   },
+   {
+    "channel": "coarse sun sensor",
+    "spec_deg": 0.6,
+    "deficit_deg": 0.2679483595654074,
+    "in_support": true,
+    "angle_at_x_star_deg": 0.8679483595654074
+   }
+  ],
+  "move_needed_deg": 0.17747131086507584
+ },
+ "adas": {
+  "sensors": [
+   "camera",
+   "lidar",
+   "radar"
+  ],
+  "tolerances_deg": [
+   0.45,
+   0.45,
+   0.45
+  ],
+  "pairwise_gaps_deg": [
+   0.866,
+   0.866,
+   0.866
+  ],
+  "exact_radius_deg": 0.49999187346069185,
+  "pairwise_radius_deg": 0.4330084960007128,
+  "rho": 1.1546929865779558,
+  "pairwise_verdict": true,
+  "exact_verdict": false,
+  "shortfall_deg": 0.04999187346069184,
+  "pinned_by": 3,
+  "support": [
+   0,
+   1,
+   2
+  ],
+  "iis": {
+   "infeasible": true,
+   "subset": [
+    0,
+    1,
+    2
+   ],
+   "size": 3,
+   "loosen_deg": 0.04999187346069184
+  }
+ }
+}

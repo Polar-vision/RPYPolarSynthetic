@@ -1,0 +1,2 @@
+kind,n_parts,reach_deg,n_pockets,parts_with_phantom,rate,mean_missing_setups,max_missing_setups
+scattered,80,25.0,4,60,0.75,0.8375,2
