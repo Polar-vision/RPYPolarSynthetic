@@ -126,5 +126,5 @@ for s in ("left", "right", "top"):
 bx.set_title("(b) where the three criteria stop agreeing", loc="left", fontsize=8.8, pad=6)
 
 fig.tight_layout(pad=0.35, w_pad=1.2)
-fig.savefig("analysis/figures/paper_fig1.png", bbox_inches="tight", facecolor="white")
+fig.savefig("analysis/figures/paper_fig1.png", dpi=400, bbox_inches="tight", facecolor="white")
 print("wrote analysis/figures/paper_fig1.png")

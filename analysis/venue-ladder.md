@@ -29,6 +29,13 @@ Engineering、AAS/AIAA Astrodynamics。适合先占位、找合作方拿实测�
 
 ## 2. 已做的改动（本版针对 TIM / Measurement）
 
+> **2026-10-31 更新**：TIM 骨架版已落地，见 `analysis/paper/tim_manuscript.md`
+> （16 页 / 8,556 词 / 5 图 / 8 表，摘要 246 词）。与下表所述 Measurement 版的差别：
+> 引用按首次出现重排为 IEEE 编号；新增 §III-F（15.47% 保证检测阈值）、
+> §II-D（保护带）、§VI-A/B（单边误差剖面 + DC/SP）、§VII-A/B（记录可及域 + 学习速率）；
+> 旧 §8–9 合并为 §VIII。投稿事务清单见 `tim_submission_checklist.md`。
+> `pairwise_sufficiency.md` 保留为 Measurement 版底本，两稿数字同一来源。
+
 - 标题从疑问句改为**主张句**：*A decision rule without an operating characteristic*。
 - 新增 §1 的判定规则线索、§2.3 审查 JCGM 106 与 Dodge–Romig 的 OC 曲线传统：
   把"两两判据"放进"判定规则必须有工作特性"的框架里，这是提 IF 的关键一步。

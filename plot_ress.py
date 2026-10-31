@@ -159,7 +159,7 @@ def fig_r1() -> None:
     tag(ax, "(c) where they meet")
 
     fig.tight_layout(pad=0.35, w_pad=0.8)
-    fig.savefig(FIG / "ress_fig1.png", bbox_inches="tight")
+    fig.savefig(FIG / "ress_fig1.png", dpi=400, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -228,7 +228,7 @@ def fig_r2() -> None:
     tag(ax, "(c) units before it shows")
 
     fig.tight_layout(pad=0.35, w_pad=0.85)
-    fig.savefig(FIG / "ress_fig2.png", bbox_inches="tight")
+    fig.savefig(FIG / "ress_fig2.png", dpi=400, bbox_inches="tight")
     plt.close(fig)
 
 

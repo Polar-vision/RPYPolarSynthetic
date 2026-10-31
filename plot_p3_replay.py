@@ -171,7 +171,7 @@ def main():
     panel_d(axes[1][1])
     fig.tight_layout(pad=1.5)
     path = OUT / "p3_replay.png"
-    fig.savefig(path, bbox_inches="tight")
+    fig.savefig(path, dpi=400, bbox_inches="tight")
     print("wrote", path)
 
 

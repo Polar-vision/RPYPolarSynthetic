@@ -10,8 +10,10 @@ const katex = require('katex');
 const BUILD = __dirname;
 const ANALYSIS = path.resolve(BUILD, '..');
 const PAPER = path.join(ANALYSIS, 'paper');
-const SRC = path.join(PAPER, 'pairwise_sufficiency.md');
-const OUT = path.join(BUILD, 'paper.html');
+// Source stem: "pairwise_sufficiency" (Measurement draft) or "tim_manuscript".
+const STEM = process.env.PAPER_SRC || 'pairwise_sufficiency';
+const SRC = path.join(PAPER, `${STEM}.md`);
+const OUT = path.join(BUILD, `${STEM}.html`);
 
 const katexDist = path.join(BUILD, 'node_modules', 'katex', 'dist');
 const katexOut = path.join(BUILD, 'katex');
@@ -41,18 +43,25 @@ const title = titleLine.replace(/^#\s+/, '').trim();
 let rest = lines.filter((l) => l !== titleLine).join('\n');
 
 // The subtitle is the first bold-italic line after the title; lift it out.
+// A line marked "**BYLINE: ...**" is an author line and is set centred (IEEE style).
 const subMatch = rest.match(/^\s*\*\*(.+?)\*\*\s*\n/i);
-const subtitle = subMatch ? subMatch[1] : '';
+let subtitle = subMatch ? subMatch[1] : '';
+const isTim = /^BYLINE:/i.test(subtitle);
+if (isTim) subtitle = subtitle.replace(/^BYLINE:\s*/i, '');
 if (subMatch) rest = rest.replace(subMatch[0], '');
 
 let bodyHtml = md.render(rest);
 
 // Figures: wrap <p><img></p> + <p><em>Figure n. ...</em></p> in a <figure> so the
 // image and its caption never split across a page.
-bodyHtml = bodyHtml.replace(/<p><em>(Figure\s+\d)/g, '<p class="caption"><em>$1');
+bodyHtml = bodyHtml.replace(/<p><em>((?:Figure|Fig\.)\s+\d)/g, '<p class="caption"><em>$1');
 bodyHtml = bodyHtml.replace(
   /<p>(<img[^>]+>)<\/p>\s*<p class="caption">([\s\S]*?)<\/p>/g,
   (m, img, cap) => `<figure>${img}<figcaption>${cap}</figcaption></figure>`);
+// IEEE table captions sit above the table and must not be orphaned from it.
+bodyHtml = bodyHtml.replace(/<p><em>(TABLE\s+[IVX]+)/g, '<p class="tcap"><em>$1');
+// IEEE first-page footnote block (manuscript received / funding / affiliation).
+bodyHtml = bodyHtml.replace(/<p>Manuscript received/g, '<p class="frontnote">Manuscript received');
 // Resolve image paths against the markdown file, so the HTML can live elsewhere.
 bodyHtml = bodyHtml.replace(/src="([^"]+)"/g, (m, p) => {
   if (/^(https?:|file:|data:)/.test(p)) return m;
@@ -77,6 +86,9 @@ body {
 h1 { font-size: 17pt; line-height: 1.28; font-weight: 700; margin: 0 0 4pt;
      text-align: left; letter-spacing: 0.1pt; }
 .subtitle { font-size: 11pt; font-style: italic; color: #333; margin: 0 0 10pt; }
+.byline { font-size: 10.6pt; font-style: normal; text-align: center; color: #111;
+          margin: 2pt 0 9pt; }
+body.tim h1 { text-align: center; }
 .title-rule { border: 0; border-top: 1pt solid #1a1a1a; margin: 6pt 0 12pt; }
 h2 { font-size: 11.6pt; font-weight: 700; margin: 13pt 0 5pt; text-align: left;
      break-after: avoid; page-break-after: avoid; }
@@ -96,21 +108,27 @@ ul, ol { margin: 0 0 6pt; padding-left: 15pt; }
 li { margin: 1.5pt 0; text-align: justify; }
 blockquote { margin: 6pt 0; padding: 1pt 0 1pt 9pt; border-left: 1.6pt solid #ccc; color: #333; }
 hr { border: 0; border-top: 0.4pt solid #bbb; margin: 10pt 0; }
-table { border-collapse: collapse; width: 100%; margin: 6pt 0 8pt;
-        font-size: 8.6pt; line-height: 1.35;
+table { border-collapse: collapse; width: 100%; margin: 5pt 0 7pt;
+        font-size: 8.3pt; line-height: 1.32;
         break-inside: avoid; page-break-inside: avoid; }
 thead { display: table-header-group; }
 tr { break-inside: avoid; page-break-inside: avoid; }
 th, td { border-top: 0.5pt solid #333; border-bottom: 0.5pt solid #333;
-         padding: 2.6pt 4pt; text-align: left; vertical-align: top; }
+         padding: 2.0pt 3.5pt; text-align: left; vertical-align: top; }
 thead th { border-top: 1pt solid #111; border-bottom: 0.6pt solid #111; }
 tbody tr:last-child td { border-bottom: 1pt solid #111; }
 img { max-width: 100%; display: block; margin: 8pt auto 3pt; }
 figure { margin: 9pt 0 11pt; break-inside: avoid; page-break-inside: avoid; }
-figure img { margin: 0 auto 3pt; }
+figure img { margin: 0 auto 3pt; max-height: 88mm; width: auto; height: auto; }
 figcaption { font-size: 8.3pt; line-height: 1.4; text-align: left; color: #1a1a1a; }
 figcaption em { font-style: normal; }
-.refs p { font-size: 8.5pt; line-height: 1.30; margin: 0 0 2.2pt; text-align: left; }
+.frontnote { font-size: 8.2pt; line-height: 1.34; color: #222; text-align: justify;
+             border-top: 0.4pt solid #999; padding-top: 4pt; margin: 2pt 0 4pt; }
+.tcap { font-size: 8.5pt; line-height: 1.3; text-align: center; margin: 9pt 0 3pt;
+        break-after: avoid; page-break-after: avoid; }
+.tcap em { font-style: normal; letter-spacing: 0.2pt; }
+.refs p { font-size: 8.5pt; line-height: 1.30; margin: 0 0 2.2pt; text-align: left;
+          padding-left: 16pt; text-indent: -16pt; }
 .katex { font-size: 1.0em; }
 .katex-display { margin: 7pt 0 8pt; break-inside: avoid; }
 .katex-display > .katex { font-size: 1.02em; }
@@ -122,9 +140,9 @@ const html = `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <title>${esc(title)}</title>
 <link rel="stylesheet" href="katex/katex.min.css">
-<style>${css}</style></head><body>
+<style>${css}</style></head><body${isTim ? ' class="tim"' : ''}>
 <h1>${esc(title)}</h1>
-${subtitle ? `<div class="subtitle">${esc(subtitle)}</div>` : ''}
+${subtitle ? `<div class="${isTim ? 'byline' : 'subtitle'}">${esc(subtitle)}</div>` : ''}
 <hr class="title-rule">
 ${bodyHtml}
 </body></html>`;
