@@ -2,4 +2,15 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
-*.pdf
+
+# build workspace: scripts + package.json are versioned, artifacts are not
+analysis/_build/node_modules/
+analysis/_build/katex/
+analysis/_build/report.html
+analysis/_build/*.pdf
+analysis/_build/*.png
+analysis/_build/*.html
+
+# the final manuscript PDFs under analysis/paper/ ARE committed
+
+.workbuddy/

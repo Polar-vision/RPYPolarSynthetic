@@ -9,8 +9,9 @@ Reproducible code and data for the manuscript
 
 This repository contains every script, table and figure behind the paper's
 numerical claims, in a self-contained form. The manuscript source
-(`analysis/paper/tim_manuscript.md` and `tim_supplement.md`) and the five
-figures are included; the PDF is a build product and is not committed.
+(`analysis/paper/tim_manuscript.md` and `tim_supplement.md`), the five
+figures, and the compiled PDFs (`analysis/paper/tim_manuscript.pdf` and
+`tim_supplement.pdf`) are all included.
 
 ## What is in here
 
@@ -21,7 +22,9 @@ analysis/
   figures/                             # paper_fig1, p3_replay, paper_fig3,
                                        # ress_fig1, ress_fig2 (all @400 dpi)
   paper/tim_manuscript.md              # manuscript (IEEE TIM skeleton)
+  paper/tim_manuscript.pdf             # compiled manuscript (16 pp)
   paper/tim_supplement.md              # one-page supplement (Fig. S-1)
+  paper/tim_supplement.pdf             # compiled supplement (1 p)
 outputs_p3/                            # P3 replay + regime map (10 tables)
 outputs_ress/                          # error profiles, coverage, record
                                        # reachability, learning rate (11 tables)
