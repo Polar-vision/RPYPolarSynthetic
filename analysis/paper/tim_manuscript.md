@@ -411,6 +411,10 @@ The author thanks the reviewers of an earlier version for pressing the distincti
 
 ## Data and Code Availability
 
+All scripts, the allocation table and the derived tables and figures are
+available in a self-contained repository at
+<https://github.com/Polar-vision/RPYPolarSynthetic>.
+
 - Allocations, with clause numbers and verbatim quotes: `analysis/data/lro_alignment_allocations.csv`.
 - Solver (planar enumeration, cross-checked against an independent spherical-cap solver, no disagreement on 300 random instances): `src/rpy_polar_synth/p3_replay.py`.
 - Sweeps and figures: `run_p3_replay.py`, `run_regime_map.py`, `run_ress.py`; `plot_p3_replay.py`, `plot_paper_fig1.py`, `plot_regime.py`, `plot_ress.py`.
