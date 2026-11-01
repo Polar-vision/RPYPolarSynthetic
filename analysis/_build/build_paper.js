@@ -119,7 +119,7 @@ thead th { border-top: 1pt solid #111; border-bottom: 0.6pt solid #111; }
 tbody tr:last-child td { border-bottom: 1pt solid #111; }
 img { max-width: 100%; display: block; margin: 8pt auto 3pt; }
 figure { margin: 9pt 0 11pt; break-inside: avoid; page-break-inside: avoid; }
-figure img { margin: 0 auto 3pt; max-height: 88mm; width: auto; height: auto; }
+figure img { margin: 0 auto 3pt; width: 100%; height: auto; max-height: 120mm; }
 figcaption { font-size: 8.3pt; line-height: 1.4; text-align: left; color: #1a1a1a; }
 figcaption em { font-style: normal; }
 .frontnote { font-size: 8.2pt; line-height: 1.34; color: #222; text-align: justify;
