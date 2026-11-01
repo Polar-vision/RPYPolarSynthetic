@@ -118,17 +118,17 @@ def panel_c(ax):
     ax.add_patch(Polygon(pts, closed=True, color=PAIR, alpha=0.55, lw=0.8,
                          edgecolor=PAIR))
     ax.plot(0, 0, "+", ms=6, color="white", mew=1.2)
-    ax.set_xlim(-0.82, 0.82)
-    ax.set_ylim(-0.95, 0.82)
+    ax.set_xlim(-0.40, 0.40)
+    ax.set_ylim(-0.40, 0.40)
     ax.set_aspect("equal")
     ax.spines[["left", "bottom", "right", "top"]].set_visible(False)
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_title("(c) the knife edge, to scale", loc="left")
     ax.annotate("the hole: no single\norientation serves all three",
-                xy=(0.0, 0.30), xytext=(0.30, 0.60), fontsize=6.8, color=PAIR,
+                xy=(0.0, -0.06), xytext=(-0.34, 0.20), fontsize=6.8, color=PAIR,
                 arrowprops=dict(arrowstyle="->", lw=0.7, color=PAIR))
-    ax.text(0, -0.93, "each arc is one channel's boundary of radius $A$;\n"
+    ax.text(0, -0.37, "each arc is one channel's boundary of radius $A$;\n"
                       "its centre sits $1.05A$ away, outside the frame",
             ha="center", fontsize=6.8, color="#333333")
 
