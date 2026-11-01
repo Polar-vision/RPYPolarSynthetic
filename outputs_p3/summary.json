@@ -1,0 +1,269 @@
+{
+ "source": {
+  "document": "LRO Pointing and Alignment Specification 431-SPEC-000113 rev A",
+  "public": true,
+  "units": "arc-seconds, per axis, half-cone"
+ },
+ "C1_pair": {
+  "channels": 2,
+  "allocation_total_arcsec": 102.0,
+  "requirement_arcsec": 103.0,
+  "margin_arcsec": 1.0,
+  "rho": 1.0,
+  "verdict_pairwise": true,
+  "verdict_exact": true,
+  "note": "two channels: exact = pairwise, so the summing convention in Table 9-3 is not optimistic here"
+ },
+ "C1_containment": {
+  "requirement_arcsec": 5040.0,
+  "allocation_arcsec": 1636.0,
+  "half_fov_arcsec": 5156.62015617741,
+  "geometric_slack_arcsec": 116.62015617740963,
+  "reading_nominal_limit": "allocation is spent inside the 1.4 deg",
+  "reading_built_limit": "1.4 deg bounds the as-built offset",
+  "overrun_if_built_arcsec": 1519.3798438225904,
+  "verdict": "UNDECIDED"
+ },
+ "table": {
+  "n_channels": 10,
+  "allocations_arcsec": [
+   300.0,
+   300.0,
+   300.0,
+   300.0,
+   300.0,
+   500.0,
+   500.0,
+   500.0,
+   750.0,
+   36.0
+  ],
+  "min_arcsec": 36.0,
+  "max_arcsec": 750.0,
+  "iis_when_laser_ranging_displaced": {
+   "infeasible": true,
+   "subset": [
+    4,
+    9
+   ],
+   "loosen_arcsec": 0.9630646725127325
+  },
+  "iis_names": [
+   "LAMP",
+   "LR-telescope"
+  ],
+  "deck_without_laser_feasible": true,
+  "whole_group_feasible": false
+ },
+ "C2_rescue": [
+  {
+   "n_channels": 9,
+   "T_over_Amin": 0.6,
+   "rate_pairwise": 1.0,
+   "rate_exact": 1.0,
+   "rate_missed_by_pairwise": 0.0
+  },
+  {
+   "n_channels": 9,
+   "T_over_Amin": 0.8,
+   "rate_pairwise": 1.0,
+   "rate_exact": 1.0,
+   "rate_missed_by_pairwise": 0.0
+  },
+  {
+   "n_channels": 9,
+   "T_over_Amin": 1.0,
+   "rate_pairwise": 1.0,
+   "rate_exact": 1.0,
+   "rate_missed_by_pairwise": 0.0
+  },
+  {
+   "n_channels": 9,
+   "T_over_Amin": 1.05,
+   "rate_pairwise": 0.9816,
+   "rate_exact": 0.9756,
+   "rate_missed_by_pairwise": 0.006
+  },
+  {
+   "n_channels": 9,
+   "T_over_Amin": 1.1,
+   "rate_pairwise": 0.9264,
+   "rate_exact": 0.9152,
+   "rate_missed_by_pairwise": 0.0112
+  },
+  {
+   "n_channels": 9,
+   "T_over_Amin": 1.15,
+   "rate_pairwise": 0.8372,
+   "rate_exact": 0.8152,
+   "rate_missed_by_pairwise": 0.022
+  },
+  {
+   "n_channels": 9,
+   "T_over_Amin": 1.25,
+   "rate_pairwise": 0.602,
+   "rate_exact": 0.5688,
+   "rate_missed_by_pairwise": 0.0332
+  },
+  {
+   "n_channels": 9,
+   "T_over_Amin": 1.4,
+   "rate_pairwise": 0.3704,
+   "rate_exact": 0.3384,
+   "rate_missed_by_pairwise": 0.032
+  },
+  {
+   "n_channels": 9,
+   "T_over_Amin": 1.6,
+   "rate_pairwise": 0.144,
+   "rate_exact": 0.1256,
+   "rate_missed_by_pairwise": 0.0184
+  },
+  {
+   "n_channels": 9,
+   "T_over_Amin": 2.0,
+   "rate_pairwise": 0.0136,
+   "rate_exact": 0.0112,
+   "rate_missed_by_pairwise": 0.0024
+  },
+  {
+   "n_channels": 9,
+   "T_over_Amin": 2.5,
+   "rate_pairwise": 0.0012,
+   "rate_exact": 0.0012,
+   "rate_missed_by_pairwise": 0.0
+  }
+ ],
+ "C2_band": {
+  "at_300": {
+   "n": 3,
+   "pairwise_capacity_arcsec": 600.0,
+   "exact_capacity_arcsec": 519.6152422706632,
+   "band_arcsec": 80.3847577293368,
+   "band_frac": 0.1339745962155614,
+   "rho": 1.1547005383792517
+  },
+  "at_500": {
+   "n": 3,
+   "pairwise_capacity_arcsec": 1000.0,
+   "exact_capacity_arcsec": 866.0254037844386,
+   "band_arcsec": 133.9745962155614,
+   "band_frac": 0.1339745962155614,
+   "rho": 1.1547005383792517
+  },
+  "at_750": {
+   "n": 3,
+   "pairwise_capacity_arcsec": 1500.0,
+   "exact_capacity_arcsec": 1299.038105676658,
+   "band_arcsec": 200.961894323342,
+   "band_frac": 0.1339745962155614,
+   "rho": 1.1547005383792517
+  }
+ },
+ "C2_qualification": {
+  "min_alloc_arcsec": 300.0,
+  "spread_arcsec": 300.0,
+  "T_over_A": 1.0,
+  "shim_needed": false,
+  "shim_possible": true,
+  "pairwise_would_claim_arcsec": 346.4101615137755,
+  "over_promise_arcsec": 46.410161513775506,
+  "band": [
+   300.0,
+   346.4101615137755
+  ]
+ },
+ "C3_production": [
+  {
+   "n_channels": 9,
+   "sigma_arcsec": 100.0,
+   "n_draw": 1200,
+   "rate_per_channel": 0.03,
+   "rate_pairwise": 0.16916666666666666,
+   "rate_exact": 0.1575,
+   "rate_missed_by_pairwise": 0.011666666666666667,
+   "rate_missed_by_per_channel": 0.0,
+   "share_of_failures_missed_by_pairwise": 0.013847675568743818,
+   "share_of_failures_missed_by_per_channel": 0.0,
+   "slack_p01_arcsec": -170.46801821450165,
+   "slack_median_arcsec": -50.72425255903172,
+   "min_alloc_arcsec": 119.99999999999999,
+   "max_alloc_arcsec": 300.0,
+   "A_over_sigma": 1.2
+  },
+  {
+   "n_channels": 9,
+   "sigma_arcsec": 100.0,
+   "n_draw": 1200,
+   "rate_per_channel": 0.1975,
+   "rate_pairwise": 0.5741666666666667,
+   "rate_exact": 0.5583333333333333,
+   "rate_missed_by_pairwise": 0.015833333333333335,
+   "rate_missed_by_per_channel": 0.0,
+   "share_of_failures_missed_by_pairwise": 0.035849056603773584,
+   "share_of_failures_missed_by_per_channel": 0.0,
+   "slack_p01_arcsec": -136.38274775406387,
+   "slack_median_arcsec": 0.0,
+   "min_alloc_arcsec": 160.0,
+   "max_alloc_arcsec": 400.0,
+   "A_over_sigma": 1.6
+  },
+  {
+   "n_channels": 9,
+   "sigma_arcsec": 100.0,
+   "n_draw": 1200,
+   "rate_per_channel": 0.47833333333333333,
+   "rate_pairwise": 0.8691666666666666,
+   "rate_exact": 0.86,
+   "rate_missed_by_pairwise": 0.009166666666666667,
+   "rate_missed_by_per_channel": 0.0,
+   "share_of_failures_missed_by_pairwise": 0.06547619047619048,
+   "share_of_failures_missed_by_per_channel": 0.0,
+   "slack_p01_arcsec": -94.99404891033186,
+   "slack_median_arcsec": 14.082013173789221,
+   "min_alloc_arcsec": 200.0,
+   "max_alloc_arcsec": 500.0,
+   "A_over_sigma": 2.0
+  },
+  {
+   "n_channels": 9,
+   "sigma_arcsec": 100.0,
+   "n_draw": 1200,
+   "rate_per_channel": 0.7516666666666667,
+   "rate_pairwise": 0.9758333333333333,
+   "rate_exact": 0.975,
+   "rate_missed_by_pairwise": 0.0008333333333333334,
+   "rate_missed_by_per_channel": 0.0,
+   "share_of_failures_missed_by_pairwise": 0.03333333333333333,
+   "share_of_failures_missed_by_per_channel": 0.0,
+   "slack_p01_arcsec": -55.00573314013532,
+   "slack_median_arcsec": 54.54419122162915,
+   "min_alloc_arcsec": 239.99999999999997,
+   "max_alloc_arcsec": 600.0,
+   "A_over_sigma": 2.4
+  },
+  {
+   "n_channels": 9,
+   "sigma_arcsec": 100.0,
+   "n_draw": 1200,
+   "rate_per_channel": 0.9525,
+   "rate_pairwise": 0.9983333333333333,
+   "rate_exact": 0.9983333333333333,
+   "rate_missed_by_pairwise": 0.0,
+   "rate_missed_by_per_channel": 0.0,
+   "share_of_failures_missed_by_pairwise": 0.0,
+   "share_of_failures_missed_by_per_channel": 0.0,
+   "slack_p01_arcsec": 0.0,
+   "slack_median_arcsec": 115.15623647983874,
+   "min_alloc_arcsec": 300.0,
+   "max_alloc_arcsec": 750.0,
+   "A_over_sigma": 3.0
+  }
+ ],
+ "crosscheck": {
+  "n_draw": 300,
+  "disagreements": 0,
+  "note": "planar vs spherical common-point test"
+ },
+ "seconds": 63.498915100004524
+}

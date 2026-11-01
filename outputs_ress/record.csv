@@ -1,0 +1,10 @@
+r_over_A,d_max_over_A,per_channel_ok,pairwise_ok,exact_ok
+0.85,1.472243186433546,True,True,True
+0.92,1.5934867429633675,True,True,True
+1.0,1.7320508075688779,True,True,True
+1.02,1.7666918237202551,False,True,False
+1.06,1.8359738560230106,False,True,False
+1.15,1.9918584287042091,False,True,False
+1.16,2.009178936779898,False,False,False
+1.25,2.1650635094610973,False,False,False
+1.4,2.4248711305964283,False,False,False
