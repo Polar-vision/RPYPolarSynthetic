@@ -118,19 +118,21 @@ def panel_c(ax):
     ax.add_patch(Polygon(pts, closed=True, color=PAIR, alpha=0.55, lw=0.8,
                          edgecolor=PAIR))
     ax.plot(0, 0, "+", ms=6, color="white", mew=1.2)
-    ax.set_xlim(-0.40, 0.40)
-    ax.set_ylim(-0.40, 0.40)
-    ax.set_aspect("equal")
+    # square data window centred on the origin so the arcs sit centred and large
+    ax.set_xlim(-0.85, 0.85)
+    ax.set_ylim(-0.85, 0.85)
+    ax.set_aspect("equal", adjustable="datalim")
     ax.spines[["left", "bottom", "right", "top"]].set_visible(False)
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_title("(c) the knife edge, to scale", loc="left")
     ax.annotate("the hole: no single\norientation serves all three",
-                xy=(0.0, -0.06), xytext=(-0.34, 0.20), fontsize=6.8, color=PAIR,
+                xy=(0.0, -0.06), xytext=(-0.60, 0.30), fontsize=6.8, color=PAIR,
                 arrowprops=dict(arrowstyle="->", lw=0.7, color=PAIR))
-    ax.text(0, -0.37, "each arc is one channel's boundary of radius $A$;\n"
-                      "its centre sits $1.05A$ away, outside the frame",
-            ha="center", fontsize=6.8, color="#333333")
+    ax.text(0.02, 0.02, "each arc: one channel's boundary (radius $A$),\n"
+                       "centre $1.05A$ away, outside the frame",
+            ha="left", va="bottom", fontsize=6.8, color="#333333",
+            transform=ax.transAxes)
 
 
 def panel_d(ax):
