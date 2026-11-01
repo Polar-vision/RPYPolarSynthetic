@@ -30,9 +30,9 @@ TEAL = "#2e7d6f"
 
 plt.rcParams.update({
     "font.family": "DejaVu Sans",
-    "font.size": 9,
-    "axes.titlesize": 10,
-    "axes.labelsize": 9,
+    "font.size": 11,
+    "axes.titlesize": 12,
+    "axes.labelsize": 11,
     "axes.edgecolor": "#444444",
     "axes.linewidth": 0.8,
     "figure.dpi": 200,
@@ -49,19 +49,19 @@ def panel_a(ax):
     ax.axvspan(300, 346, color=PAIR, alpha=0.13, lw=0)
     ax.barh(y, vals, color=cols, height=0.62, edgecolor="white", linewidth=0.6)
     ax.set_yticks(y)
-    ax.set_yticklabels([r["channel"] for r in rows], fontsize=7.4)
+    ax.set_yticklabels([r["channel"] for r in rows], fontsize=9.4)
     for yi, v in zip(y, vals):
-        ax.text(v + 14, yi, f"{v:.0f}", va="center", fontsize=7.2, color="#333333")
+        ax.text(v + 14, yi, f"{v:.0f}", va="center", fontsize=9.2, color="#333333")
     ax.set_xlim(0, 860)
     ax.set_xlabel("allocation to the spacecraft reference (arc-seconds, per axis)")
     ax.set_title("(a) the ten channels LRO actually specifies", loc="left")
     ax.grid(axis="x", color="#dddddd", lw=0.6)
     ax.set_axisbelow(True)
-    ax.annotate("blind band\n300–346\"", xy=(323, 8.55), xytext=(395, 9.62),
-                fontsize=7.0, color=PAIR, va="center",
+    ax.annotate("blind band\n300–346\"", xy=(323, 7.6), xytext=(430, 9.9),
+                fontsize=9.0, color=PAIR, va="center",
                 arrowprops=dict(arrowstyle="->", lw=0.8, color=PAIR))
     ax.text(770, 0.0, "on the HGA bracket,\nnot the instrument deck",
-            fontsize=6.4, color=GOLD, ha="right", va="center")
+            fontsize=8.4, color=GOLD, ha="right", va="center")
     ax.set_ylim(-0.7, 10.6)
 
 
@@ -80,19 +80,19 @@ def panel_b(ax):
     k = int(np.argmax(m))
     ax.annotate(f"widest disagreement\n{m[k]:.1f}% of the box at $T/A={t[k]:.2f}$",
                 xy=(t[k], 0.5 * (p[k] + e[k])), xytext=(1.62, 34),
-                fontsize=7.0, color=PAIR,
+                fontsize=9.0, color=PAIR,
                 arrowprops=dict(arrowstyle="->", lw=0.8, color=PAIR))
     ax.axvline(1.0, color=GREY, lw=0.7, ls="--")
-    ax.text(1.02, 88, "spread = allocation", fontsize=6.8, color=GREY,
+    ax.text(1.02, 88, "spread = allocation", fontsize=8.8, color=GREY,
             rotation=90, va="top")
     ax.set_xlabel("as-built spread $T$ / tightest allocation $A$")
-    ax.set_ylabel("share of the design box a shim can serve (%)")
+    ax.set_ylabel("share of the design box served (%)")
     ax.set_title("(b) one shim, nine channels, worst case", loc="left")
     ax.set_ylim(0, 104)
     ax.set_xlim(0.55, 2.55)
     ax.grid(color="#e8e8e8", lw=0.6)
     ax.set_axisbelow(True)
-    ax.legend(loc="lower left", fontsize=6.8, frameon=False)
+    ax.legend(loc="lower left", fontsize=8.8, frameon=False)
 
 
 def panel_c(ax):
@@ -127,11 +127,11 @@ def panel_c(ax):
     ax.set_yticks([])
     ax.set_title("(c) the knife edge, to scale", loc="left")
     ax.annotate("the hole: no single\norientation serves all three",
-                xy=(0.0, -0.06), xytext=(-0.60, 0.30), fontsize=6.8, color=PAIR,
+                xy=(0.0, -0.06), xytext=(-0.60, 0.30), fontsize=8.8, color=PAIR,
                 arrowprops=dict(arrowstyle="->", lw=0.7, color=PAIR))
     ax.text(0.02, 0.02, "each arc: one channel's boundary (radius $A$),\n"
                        "centre $1.05A$ away, outside the frame",
-            ha="left", va="bottom", fontsize=6.8, color="#333333",
+            ha="left", va="bottom", fontsize=8.8, color="#333333",
             transform=ax.transAxes)
 
 
@@ -149,18 +149,17 @@ def panel_d(ax):
                 arrowprops=dict(arrowstyle="<->", lw=0.9, color=PAIR))
     ax.text((req + alloc + half) / 2, 1.36,
             f"overrun {c['overrun_if_built_arcsec']:.0f}\"", ha="center",
-            fontsize=7.2, color=PAIR)
-    ax.text(req / 2, 1, "5040\"", ha="center", va="center", fontsize=7.0, color="white")
-    ax.text(half / 2, 0, f"{half:.0f}\"", ha="center", va="center", fontsize=7.0,
+            fontsize=9.2, color=PAIR)
+    ax.text(req / 2, 1, "5040\"", ha="center", va="center", fontsize=9.0, color="white")
+    ax.text(half / 2, 0, f"{half:.0f}\"", ha="center", va="center", fontsize=9.0,
             color="white")
     ax.set_yticks([1, 0])
-    ax.set_yticklabels(["as-built\nreading", "geometry"], fontsize=7.4)
+    ax.set_yticklabels(["as-built\nreading", "geometry"], fontsize=9.4)
     ax.set_xlim(0, 7200)
     ax.set_ylim(-0.55, 1.62)
     ax.set_xlabel("arc-seconds from the NAC boresight")
     ax.set_title("(d) one clause, two readings", loc="left")
-    ax.legend(fontsize=6.4, frameon=False, loc="lower right",
-              bbox_to_anchor=(1.02, -0.02))
+    ax.legend(fontsize=8.4, frameon=False, loc="lower right")
     ax.grid(axis="x", color="#e8e8e8", lw=0.6)
     ax.set_axisbelow(True)
 
