@@ -2,16 +2,23 @@
 
 Reproducible code and data for the manuscript
 
-> **"A Decision Rule Without an Operating Characteristic: The Pairwise Sum
-> in Multi-Channel Boresight Alignment"**
+> **"A decision rule without an operating characteristic: the pairwise sum in
+> conformance assessment of multi-channel boresight alignment"**
 > Zhengkang Zuo — Polar-vision Laboratory, College of Geoscience and
 > Surveying Engineering, Taiyuan University of Technology.
 
-This repository contains every script, table and figure behind the paper's
-numerical claims, in a self-contained form. The manuscript source
-(`analysis/paper/tim_manuscript.md` and `tim_supplement.md`), the five
-figures, and the compiled PDFs (`analysis/paper/tim_manuscript.pdf` and
-`tim_supplement.pdf`) are all included.
+The paper asks what a pairwise boresight tolerance check establishes, as a
+conformity decision rule, and answers it in two directions. On conforming data
+the rule cannot fire: its rejection region is contained in the region the
+per-channel check has already rejected, so its operating characteristic is flat
+and no record of passing builds can test it. Used the other way round, to *set*
+allocations, the same inequality is optimistic by a constant
+$2/\sqrt{3} - 1 = 15.47\,\%$, the worst case being three channels in an
+equilateral configuration.
+
+This repository contains every script, table and figure behind those claims,
+in a self-contained form: the manuscript source and compiled PDF, the solver,
+the two sweep drivers, the committed outputs, and the three figures at 400 dpi.
 
 ## What is in here
 
@@ -19,26 +26,21 @@ figures, and the compiled PDFs (`analysis/paper/tim_manuscript.pdf` and
 analysis/
   data/lro_alignment_allocations.csv   # ten-channel LRO allocation table,
                                        # clause numbers + verbatim quotes
-  figures/                             # paper_fig1, p3_replay, paper_fig3,
-                                       # ress_fig1, ress_fig2 (all @400 dpi)
-  paper/tim_manuscript.md              # manuscript (IEEE TIM skeleton)
-  paper/tim_manuscript.pdf             # compiled manuscript (16 pp)
-  paper/tim_supplement.md              # one-page supplement (Fig. S-1)
-  paper/tim_supplement.pdf             # compiled supplement (1 p)
-outputs_p3/                            # P3 replay + regime map (10 tables)
-outputs_ress/                          # error profiles, coverage, record
-                                       # reachability, learning rate (11 tables)
+  figures/                             # paper_fig1, p3_replay, paper_fig3
+                                       # (Figure 1, 2, 3 @400 dpi)
+  paper/measurement_manuscript.md      # manuscript source (Markdown + LaTeX)
+  paper/measurement_manuscript.pdf     # compiled manuscript (13 pp, A4)
+outputs_p3/                            # replay + regime sweeps (10 tables)
 src/rpy_polar_synth/
   p3_replay.py                         # planar disk-intersection solver,
                                        # certificates (support set / IIS)
-  ress.py                              # reliability-facing measurement kit
   replication.py                       # independent spherical-cap solver,
-                                       # used only for the 0/300 cross-check
-run_p3_replay.py                       # Section V: the ten-channel replay
-run_regime_map.py                      # Section VI-C/D: the regime map
-run_ress.py                            # Sections VI-A/B, VII: the RESS kit
-plot_p3_replay.py  plot_paper_fig1.py  # figures
-plot_regime.py     plot_ress.py
+                                       # used for the 0/300 cross-check
+run_p3_replay.py                       # Section 5: the ten-channel replay
+run_regime_map.py                      # Section 6: the two sweeps
+plot_paper_fig1.py                     # Figure 1
+plot_p3_replay.py                      # Figure 2
+plot_regime.py                         # Figure 3
 ```
 
 ## Reproducing
@@ -49,41 +51,49 @@ Dependencies: Python 3.10+ with `numpy` and `matplotlib`.
 export PYTHONPATH=src        # Windows: set PYTHONPATH=src
 
 python run_p3_replay.py      # ~70 s  -> outputs_p3/
-python run_regime_map.py     #         -> outputs_p3/ (8000 draws/cell)
-python run_ress.py           # ~95 s  -> outputs_ress/
+python run_regime_map.py     #         -> outputs_p3/ (8000 draws per cell)
 
-python plot_p3_replay.py     # -> analysis/figures/p3_replay.png
 python plot_paper_fig1.py    # -> analysis/figures/paper_fig1.png
+python plot_p3_replay.py     # -> analysis/figures/p3_replay.png
 python plot_regime.py        # -> analysis/figures/paper_fig3.png
-python plot_ress.py          # -> analysis/figures/ress_fig1.png, ress_fig2.png
 ```
 
 The runs are deterministic under fixed seeds (see each script). The
-`outputs_*` directories already hold the committed results; re-running the
-scripts reproduces them bit-for-bit.
+`outputs_p3/` directory already holds the committed results; re-running the
+scripts reproduces them.
+
+The manuscript PDF is built from the Markdown source by a small local
+toolchain (Markdown + KaTeX rendered through headless Chrome) that is not part
+of this archive. Every number in it is generated by the scripts above.
 
 ## Key numbers, and where they come from
 
 | Claim | Script | Evidence |
 |---|---|---|
-| LRO Table 9-3 `1''` margin reproduced exactly (n=2) | `run_p3_replay.py` | `outputs_p3/lro_channels.csv` |
-| LOLA-into-NAC returned undecided, `1519''` between readings | `run_p3_replay.py` | `outputs_p3/production_view.csv` |
-| IIS = {LAMP, laser-ranging telescope} | `run_p3_replay.py` | replay summary |
+| LRO Table 9-3 `1''` margin reproduced exactly (n = 2) | `run_p3_replay.py` | `outputs_p3/lro_channels.csv` |
+| LOLA-into-NAC clause returned undecided, `1519''` between two readings | `run_p3_replay.py` | `outputs_p3/production_view.csv` |
+| Irreducible infeasible subset = {LAMP, laser-ranging telescope} | `run_p3_replay.py` | `outputs_p3/summary.json` |
 | 0/1200 misses at the 3-sigma convention | `run_p3_replay.py` | `outputs_p3/summary.json` |
-| Worst disagreement 3.3 % at T/A = 1.25 | `run_p3_replay.py` | replay summary |
-| Regime peak 2.61 % (n=9, A/σ=1.8); per-channel miss ≡ 0 | `run_regime_map.py` | `outputs_p3/regime_grid.csv` |
-| Detection coverage 0.92–0.997 vs 1.000; false-alarm 0 vs 0.22–0.87 | `run_ress.py` | `outputs_ress/coverage.csv` |
-| Record reachability 2.7e-5; tangent at r*=A | `run_ress.py` | `outputs_ress/record.csv`, `box_shares.csv` |
-| p = 3.3 % needs 48 units to observe once | `run_ress.py` | `outputs_ress/economics.csv` |
-| 2/√3 − 1 = 15.47 % guaranteed threshold (Proposition 3) | closed form | — |
+| Worst disagreement 3.3 % of the design box at T/A = 1.25 | `run_p3_replay.py` | `outputs_p3/rescue_curve.csv` |
+| Regime peak 2.61 % (n = 9, A/σ = 1.8); per-channel miss identically 0 | `run_regime_map.py` | `outputs_p3/regime_grid.csv` |
+| Mechanical partitioning recovered from the ten numbers alone | `run_p3_replay.py` | `outputs_p3/lro_channels.csv` |
+| 2/√3 − 1 = 15.47 % guaranteed threshold (§4.3) | closed form | — |
+| 80.4″ absolute width of the silent band (§4.3) | closed form | — |
 
 ## Notes
 
-- `replication.py` implements the independent spherical-cap solver used only
-  to cross-check the planar solver; the paper reports "no disagreement on 300
-  random instances". The degree-to-radian constant is defined locally so the
-  three modules have no dependency outside this package.
 - The public specification replayed is NASA GSFC *LRO Pointing and Alignment
-  Specification*, 431-SPEC-000113 Rev. A (6 Apr 2007). The allocation table
-  with clause numbers and verbatim quotes is in
-  `analysis/data/lro_alignment_allocations.csv`.
+  Specification*, 431-SPEC-000113 Rev. A (6 Apr 2007). It is not redistributed
+  here; `analysis/data/lro_alignment_allocations.csv` carries each allocation
+  with its clause number and the verbatim sentence, so every value can be
+  traced back to the public document.
+- The solvers form a closed dependency set. `p3_replay.py` and
+  `replication.py` import nothing outside this package, and the
+  degree-to-radian constant is defined locally in each rather than borrowed
+  from an unrelated module.
+- `replication.py` implements the independent spherical-cap solver used only to
+  cross-check the planar solver; the paper reports no disagreement on 300
+  random instances.
+- This branch replaces an earlier release that documented the IEEE TIM version
+  of the paper. That version, and the reliability-facing experiment kit that
+  accompanied it, remain on `main`.

@@ -60,7 +60,11 @@ import time
 
 import numpy as np
 
-DEG = np.pi / 180.0  # degrees to radians (was imported from safety_scenarios)
+# Kept local so that the replay solvers form a closed dependency set. Importing
+# it from safety_scenarios pulled in branch_scale, cone_keepout and
+# pointing_prototype, none of which this module touches, and any checkout that
+# ships only the solvers then failed at import time.
+DEG = np.pi / 180.0
 
 __all__ = [
     "unit",
