@@ -1,0 +1,23 @@
+Date: 1 November 2026
+
+To the Editor-in-Chief,
+IEEE Transactions on Instrumentation and Measurement
+
+Dear Editor,
+
+Please consider our manuscript entitled “A Decision Rule Without an Operating Characteristic: The Pairwise Sum in Multi-Channel Boresight Alignment” ​ for publication as a regular paper in IEEE Transactions on Instrumentation and Measurement.
+
+Multi-channel payloads are allocated alignment tolerances one channel at a time but verified one pair at a time, through the sum of two allocations. This paper asks what that pairwise check actually establishes. We show that, in design, the rule is optimistic by a fixed constant (allocations derived from pairwise sums are 15.5% too small, with the worst case being three channels in an equilateral configuration — a consequence of Jung's theorem), and that, in assembly, the rule has no operating characteristic of its own: its rejection region is contained in the region already rejected by the per-channel check, so no build record can distinguish it from an exact feasibility test. We bound the depth of this blind spot and reproduce the analysis on a public ten-channel specification, recovering its arithmetic to the arc-second.
+
+The paper contributes directly to the theory and methodology of measurement: it is a study of a conformance-assessment decision rule — how a tolerance table converts measured deviations into an accept/reject verdict, and what evidence could ever validate such a rule. We believe it fits the journal's scope on measurement theory and uncertainty and should interest readers working on calibration, tolerance budgeting, and instrument alignment.
+
+This manuscript is original, has not been published previously, and is not under consideration elsewhere. All authors have read and approved the submission and declare no conflict of interest.
+
+Thank you for your consideration. We look forward to your response.
+
+Sincerely,
+
+Zhengkang Zuo
+Polar-vision Laboratory, College of Geoscience and Surveying Engineering
+Taiyuan University of Technology, Taiyuan, China
+E-mail: zuozhengkang@tyut.edu.cn

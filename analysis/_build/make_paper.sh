@@ -27,7 +27,10 @@ PAPER_SRC="$STEM" node build_paper.js
   --print-to-pdf="$HERE_WIN/${STEM}_raw.pdf" \
   "file:///$HERE_WIN/${STEM}.html" 2>&1 | tail -1
 
-"$PY" stamp.py "${STEM}_raw.pdf" "${STEM}_stamped.pdf"
+TITLE="$("$PY" -c 'import pathlib,re,sys; s=pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"); print(re.search(r"^#\s+(.+)$",s,re.M).group(1))' "$ANALYSIS/paper/${STEM}.md")"
+SUBJECT="${PDF_SUBJECT:-Manuscript draft}"
+AUTHOR="${PDF_AUTHOR:-}"
+"$PY" stamp.py "${STEM}_raw.pdf" "${STEM}_stamped.pdf" "$TITLE" "$SUBJECT" "$AUTHOR"
 cp "${STEM}_stamped.pdf" "$ANALYSIS/paper/${STEM}.pdf"
 
 PAGES="$("$PY" -c "import pypdf;print(len(pypdf.PdfReader('${STEM}_stamped.pdf').pages))")"

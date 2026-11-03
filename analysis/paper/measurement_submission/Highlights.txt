@@ -1,0 +1,5 @@
+- A pairwise boresight table cannot reject a build that passes the per-channel check
+- On conforming data its rejection probability is identically zero for every n >= 3
+- Used to set allocations it is optimistic by Jung's constant, 15.5 % too small
+- A replay of NASA LRO 431-SPEC-000113 closes its one pairwise sum to the arc-second
+- Three screening questions, answerable from the table alone, bound where this matters

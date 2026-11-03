@@ -1,7 +1,7 @@
 """Stamp "N / M" page numbers onto a print-to-PDF output.
 
 Usage:
-    python stamp.py report_raw.pdf technical_report_polar_geometry.pdf
+    python stamp.py input.pdf output.pdf [title] [subject] [author]
 
 The title page (page 1) is left unnumbered, matching the previous build;
 numbering counts it, so page 2 shows "2 / M".
@@ -30,7 +30,7 @@ def make_overlay(width, height, label):
     return PdfReader(buf).pages[0]
 
 
-def main(src, dst):
+def main(src, dst, title=None, subject=None, author=None):
     reader = PdfReader(src)
     total = len(reader.pages)
     writer = PdfWriter()
@@ -43,9 +43,9 @@ def main(src, dst):
         writer.add_page(page)
 
     writer.add_metadata({
-        "/Title": "从像平面到方向光锥：RPY 分层极坐标观测模型的数学性质、UV 对比与工程转化价值",
-        "/Subject": "技术报告 · 基于仓库 RPYPolarSynthetic 的代码、实验 CSV 与既有图",
-        "/Author": "RPYPolarSynthetic",
+        "/Title": title or "从像平面到方向光锥：RPY 分层极坐标观测模型的数学性质、UV 对比与工程转化价值",
+        "/Subject": subject or "技术报告 · 基于仓库 RPYPolarSynthetic 的代码、实验 CSV 与既有图",
+        "/Author": author if author is not None else "RPYPolarSynthetic",
         "/Creator": "markdown-it + KaTeX + headless Chrome",
     })
 
@@ -55,6 +55,6 @@ def main(src, dst):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
+    if not 3 <= len(sys.argv) <= 6:
         sys.exit(__doc__)
-    main(sys.argv[1], sys.argv[2])
+    main(*sys.argv[1:])

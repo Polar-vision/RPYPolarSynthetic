@@ -1,0 +1,24 @@
+Submission package manifest
+==========================
+journal : Measurement
+title   : A decision rule without an operating characteristic: the pairwise sum in conformance assessment of multi-channel boresight alignment
+
+Abstract.txt                          2,271 B  dc90345cc86b786b
+Acknowledgments.docx                 37,219 B  4e4cbadae5b4b5fb
+Cover_letter.md                       2,751 B  352da98a581e2dcf
+Cover_letter.pdf                     77,667 B  c4b3b8a55279ba41
+Declaration_of_Interest.docx         37,092 B  43b514b270fde9b5
+Highlights.docx                      37,107 B  92051bd64f0ffbe7
+Highlights.txt                          426 B  4a081b6680ddc3f7
+Manuscript_anonymized.pdf         2,331,441 B  f091cf2e834f052c
+PASTE_BLOCK.md                        4,751 B  28ff782ab4e99cf0
+SUBMISSION_GUIDE.md                   6,079 B  af61436628f58665
+Supplementary_material.zip          111,728 B  86a7d076fbe8c7cb
+Title_page.docx                      37,806 B  50c12479de457ac3
+Title_page.md                         2,152 B  55e66b2f4220ae0e
+Title_page.pdf                       77,829 B  0f603ca5c102e575
+
+figures/
+  Figure_1.png                      209,151 B  475feb73b44a3926
+  Figure_2.png                      609,250 B  c2870efb54cbdbed
+  Figure_3.png                      269,811 B  776242c92683c9b5

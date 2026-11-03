@@ -16,7 +16,16 @@ analysis/_build/katex/
 analysis/_build/report.html
 analysis/_build/*.pdf
 analysis/_build/*.png
+analysis/_build/*.html
+analysis/_build/*_check/
 analysis/_pg/
 
 # paper PDFs are build products, same rule as the report
 analysis/paper/*.pdf
+analysis/*.pdf
+
+# submission packages are deliverables, but their rendered proofs are not
+analysis/paper/measurement_submission/_check/
+analysis/paper/measurement_submission/_*.html
+# the unpacked supplement is rebuilt from Supplementary_material.zip on every run
+analysis/paper/measurement_submission/supplementary/

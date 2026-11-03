@@ -1,0 +1,88 @@
+{
+  "_comment": "Single source of truth for the Measurement submission front matter. Edit here, then run build_frontmatter.py. Fields marked TODO must be confirmed by the author before upload.",
+
+  "journal": "Measurement",
+  "publisher": "Elsevier",
+  "article_type": "Research paper",
+
+  "title": "A decision rule without an operating characteristic: the pairwise sum in conformance assessment of multi-channel boresight alignment",
+  "running_title": "A decision rule without an operating characteristic",
+
+  "author": {
+    "given_name": "Zhengkang",
+    "family_name": "Zuo",
+    "full_name": "Zhengkang Zuo",
+    "affiliation": "Polar-vision Laboratory, College of Geoscience and Surveying Engineering, Taiyuan University of Technology",
+    "address": "Taiyuan 030024, Shanxi, China",
+    "email": "zuozhengkang@tyut.edu.cn",
+    "orcid": "0000-0003-1255-6332",
+    "orcid_todo": "Confirmed by the author on 2026-11-03."
+  },
+
+  "funding": [
+    "National Natural Science Foundation of China, grant no. T2600787",
+    "Natural Science Foundation of Shanxi Province, grant no. 202403021212106"
+  ],
+
+  "keywords": [
+    "conformity assessment",
+    "decision rule",
+    "measurement uncertainty",
+    "boresight alignment",
+    "tolerance allocation",
+    "operating characteristic",
+    "minimal enclosing circle",
+    "guard band"
+  ],
+
+  "highlights": [
+    "A pairwise boresight table cannot reject a build that passes the per-channel check",
+    "On conforming data its rejection probability is identically zero for every n >= 3",
+    "Used to set allocations it is optimistic by Jung's constant, 15.5 % too small",
+    "A replay of NASA LRO 431-SPEC-000113 closes its one pairwise sum to the arc-second",
+    "Three screening questions, answerable from the table alone, bound where this matters"
+  ],
+
+  "abstract_word_limit_note": "Measurement has no hard abstract limit for research papers; the abstract is ~330 words and should be checked against the current guide on submission.",
+
+  "declarations": {
+    "competing_interest": "The author declares that he has no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.",
+    "funding_statement": "This work was supported by the National Natural Science Foundation of China (grant no. T2600787) and the Natural Science Foundation of Shanxi Province (grant no. 202403021212106).",
+    "credit": "Zhengkang Zuo: Conceptualization, Methodology, Software, Validation, Formal analysis, Investigation, Data curation, Writing - original draft, Writing - review & editing, Visualization.",
+    "ethics": "Not applicable. This study did not involve human participants, human data or animal subjects.",
+    "data_availability": "The allocation table transcribed from the public specification, the solver, the sweep drivers, the derived CSV outputs and the figure scripts are provided as supplementary material with this submission. On acceptance the same package will be deposited in a public repository and the DOI added to the article. The specification itself is a public NASA document and is not redistributed.",
+    "ai_use": "During the preparation of this work the author used a large language model assistant to write code and to polish the language of the manuscript. The author reviewed and edited all content, verified every numerical result against the supplied code and data, and takes full responsibility for the content of the publication.",
+    "ai_use_todo": "Wording confirmed by the author on 2026-11-03: code generation and language polishing only."
+  },
+
+  "cover_letter": {
+    "salutation": "Dear Editor,",
+    "closing": "Yours sincerely,",
+    "paragraphs": [
+      "Please consider the enclosed manuscript, \u201cA decision rule without an operating characteristic: the pairwise sum in conformance assessment of multi-channel boresight alignment\u201d, for publication in <i>Measurement</i> as a research paper.",
+      "The manuscript analyses a decision rule that is used throughout the alignment of multi-channel instruments but has never been examined as a decision rule. Payloads are allocated tolerances one channel at a time and then checked one pair at a time: every pair of as-built deviations must lie within the sum of the two allocations. The paper shows that this check has no operating characteristic in the sense of JCGM 106. Its rejection region is contained in the region the per-channel check has already rejected, so on conforming data its rejection probability is identically zero and no record of passing builds can test it. The same inequality used in the other direction, to set allocations, is optimistic by a sharp constant: allocations must be 15.5 % larger than pairwise sums imply, the worst case being three channels in an equilateral configuration. The paper then maps where the defect can matter and replays a public ten-channel specification (NASA LRO 431-SPEC-000113 Rev A), in which the accounting closes to the arc-second.",
+      "I believe the work belongs in <i>Measurement</i> rather than in an instrument-design journal because its subject is not a new instrument but the use of measurement data: what a conformity verdict built on measured deviations can and cannot establish, and what evidence would be required to test the rule that produces it. The paper is written in the vocabulary of conformity assessment \u2014 acceptance interval, guard band, producer's and consumer's risk, operating characteristic \u2014 and it engages the measurement literature on decision rules, including three papers published in this journal and the JCGM 106 framework.",
+      "The manuscript is original, has not been published elsewhere and is not under consideration by another journal. It is the work of a single author, who is responsible for all parts of it and declares no competing interests. The work was supported by the National Natural Science Foundation of China (grant no. T2600787) and the Natural Science Foundation of Shanxi Province (grant no. 202403021212106). Code, transcribed data and derived outputs accompany the submission as supplementary material.",
+      "Thank you for your consideration."
+    ]
+  },
+
+  "suggested_reviewers_note": "Optional in Editorial Manager. If you supply names, verify the e-mail address on the person's institutional page first; do not enter a guessed address.",
+  "suggested_reviewers": [
+    {
+      "name": "L. R. Pendrill",
+      "affiliation": "RISE Research Institutes of Sweden (measurement science; conformity assessment and decision rules)",
+      "email": ""
+    },
+    {
+      "name": "A. B. Forbes",
+      "affiliation": "National Physical Laboratory, UK (uncertainty evaluation; optimised conformance assessment)",
+      "email": ""
+    },
+    {
+      "name": "G. B. Rossi",
+      "affiliation": "University of Genoa, Italy (measurement-based decisions; probabilistic risk of wrong decision)",
+      "email": ""
+    }
+  ]
+}

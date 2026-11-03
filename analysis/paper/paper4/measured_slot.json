@@ -1,0 +1,128 @@
+{
+  "_schema": "paper4/measured_record/v1",
+  "_purpose": "Single container for every number in paper 4 that must come from a real system. The manuscript must not contain a measured claim unless the corresponding field here is non-null AND _provenance is filled.",
+  "_hard_rule": "null means NOT MEASURED. Do not substitute a plausible value, a target value, or a value borrowed from a synthetic example. A manuscript built on a filled-in guess is data fabrication, not an illustrative example.",
+  "_legend": {
+    "null": "not yet obtained",
+    "number/array": "measured, provenance required",
+    "status.PENDING": "manuscript section stays labelled as protocol, not result",
+    "status.FILLED": "manuscript section may be rewritten as a result"
+  },
+
+  "status": {
+    "state": "PENDING",
+    "last_updated": "2026-11-01",
+    "records_in_hand": 0,
+    "records_target_min": 1,
+    "records_target_good": 20,
+    "note": "Paper 4 needs exactly one decisive record to be publishable as a measured test. Product P3 needs the same record. This is the shared investment referred to in ip-moat-and-publication.md 4.4."
+  },
+
+  "_provenance": {
+    "source_organisation": null,
+    "agreement": null,
+    "anonymisation": null,
+    "release_permission": null,
+    "contact": null,
+    "note": "Must be completed before any number below is used in a submitted manuscript. Without a documented release the record cannot be reported, even in aggregate."
+  },
+
+  "record": {
+    "id": null,
+    "system_class": null,
+
+    "system": {
+      "n_channels": null,
+      "channels": [],
+      "shares_one_interface": null,
+      "calibratable_after_build": null,
+      "note_calibratable_after_build": "FLAG. If the system can be calibrated after assembly, a geometric shortfall is absorbed by calibration and the record cannot be decisive for the S4.4 claim in its cost form. It can still be decisive in the feasibility form. Record this field before anything else."
+    },
+
+    "allocations": {
+      "unit": "arc-seconds, per axis, half-cone",
+      "A_i": null,
+      "A_min": null,
+      "A_max": null,
+      "source_clause": null,
+      "note": "Copy verbatim from the interface control document or the alignment budget table. Do not re-derive."
+    },
+
+    "measured_deviations": {
+      "unit": "arc-seconds, per axis",
+      "d_i": null,
+      "frame_definition": null,
+      "instrument": null,
+      "instrument_uncertainty_arcsec": null,
+      "measurement_epoch": null,
+      "n_repeat_measurements": null,
+      "repeatability_arcsec": null,
+      "note": "d_i is the vector from the common reference to each channel optical axis. The frame definition must be written down: which axis is the reference, and whether the deviation is expressed in the payload frame or per-channel local frame. A record without a stated frame is not usable."
+    },
+
+    "review_at_the_time": {
+      "criterion_used": null,
+      "criterion_wording": null,
+      "verdict": null,
+      "reviewer_role": null,
+      "document_reference": null,
+      "note": "criterion_used is one of: pairwise_sum, exact_cap, per_channel_only, other, unknown. If unknown, the record cannot establish that the pairwise rule was the one in force, and the decisive claim collapses. This is the field most often missing."
+    },
+
+    "outcome": {
+      "first_assembly_passed": null,
+      "rework_required": null,
+      "rework_description": null,
+      "calibration_used_to_absorb": null,
+      "calibration_residual_arcsec": null,
+      "schedule_impact": null,
+      "cost_impact": null,
+      "note": "first_assembly_passed is the dependent variable. Everything else is context that strengthens or weakens the causal reading."
+    },
+
+    "derived": {
+      "_computed_by": "run_paper4_record.py (to be written); do not fill by hand",
+      "r_star_arcsec": null,
+      "support_set": null,
+      "pairwise_verdict": null,
+      "exact_verdict": null,
+      "decisive": null,
+      "shortfall_arcsec": null,
+      "shortfall_over_Amin_frac": null,
+      "note": "decisive = (pairwise_verdict == PASS) AND (exact_verdict == FAIL). This predicate is frozen before data collection; see paper4_draft.md section 2.3. Do not redefine it after seeing the record."
+    }
+  },
+
+  "frozen_predicates": {
+    "_note": "These are pre-registered. Changing them after a record arrives is the definition of HARKing and voids the test.",
+    "decisive_record": "pairwise_verdict == PASS and exact_verdict == FAIL",
+    "confirmatory_of_claim": "decisive_record == true AND outcome.first_assembly_passed == false",
+    "informative_negative": "decisive_record == false on a system where the screen of section 2.2 predicted a decisive record",
+    "screen_admits": [
+      "A_min / sigma_measured >= 2.5",
+      "n_channels >= 3",
+      "shares_one_interface == true OR calibratable_after_build == false"
+    ]
+  },
+
+  "synthetic_examples_index": {
+    "_note": "NOT measured data. These are computed configurations used only as illustrations in section 4 of the manuscript, and are labelled as such there. They live in outputs_replication/ and are reproducible from the repository.",
+    "R4": {
+      "what": "three-channel configuration, unequal allocations",
+      "source": "outputs_replication/summary.json: R4",
+      "pairwise_radius_deg": 0.4330085,
+      "exact_radius_deg": 0.4999919,
+      "rho": 1.1546930,
+      "shortfall_deg": 0.0499919,
+      "status": "computed, not measured"
+    },
+    "ring_n3_at_300arcsec": {
+      "what": "equal three-channel ring family, 300 arc-second allocation",
+      "source": "outputs_p3/summary.json: C2_band.at_300",
+      "pairwise_capacity_arcsec": 600.0,
+      "exact_capacity_arcsec": 519.6152,
+      "band_arcsec": 80.3848,
+      "status": "computed, not measured"
+    }
+  }
+}
