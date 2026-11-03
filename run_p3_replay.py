@@ -35,7 +35,11 @@ from rpy_polar_synth.p3_replay import (
 )
 from rpy_polar_synth.replication import feasible as feasible_sphere
 from rpy_polar_synth.replication import unit
-from rpy_polar_synth.safety_scenarios import DEG
+
+# Kept local on purpose: importing it from safety_scenarios dragged in the whole
+# pointing-prototype chain (branch_scale, cone_keepout) that this script does not
+# use, and a trimmed checkout that ships only the replay solver failed on it.
+DEG = np.pi / 180.0  # degrees to radians
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "outputs_p3"
