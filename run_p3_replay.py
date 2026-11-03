@@ -150,12 +150,14 @@ def main() -> None:
     summary["C3_production"] = sig_rows
 
     summary["crosscheck"] = crosscheck()
-    summary["seconds"] = time.perf_counter() - t0
+    elapsed = time.perf_counter() - t0
+    # Wall-clock is printed, never written: summary.json is a committed artifact
+    # and a timing field would make every re-run look like a change.
     (OUT / "summary.json").write_text(
         json.dumps(summary, indent=1, ensure_ascii=False, default=str),
         encoding="utf-8")
 
-    print(f"done in {summary['seconds']:.1f} s -> {OUT}")
+    print(f"done in {elapsed:.1f} s -> {OUT}")
     print("table: %d channels, %s..%s arcsec" % (len(names), A.min(), A.max()))
     print("C1 pair margin %.1f arcsec (rho %.3f)" %
           (summary["C1_pair"]["margin_arcsec"], summary["C1_pair"]["rho"]))
